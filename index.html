@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Starfix Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <script>
+      if (window.location.protocol === 'file:') {
+        // Auto-redirect to local dev server when double-clicked in File Explorer
+        setTimeout(() => {
+          window.location.href = 'http://localhost:8443';
+        }, 800);
+
+        document.addEventListener('DOMContentLoaded', () => {
+          document.body.innerHTML = `
+            <div style="font-family: system-ui, -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #FAF8F4; margin: 0; padding: 20px; box-sizing: border-box; text-align: center; color: #171717;">
+              <div style="background: white; border: 1px solid #ECE7DF; border-radius: 16px; padding: 40px 32px; max-width: 480px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.04); box-sizing: border-box;">
+                <div style="width: 52px; height: 52px; background: #171717; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C89B1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                </div>
+                <h1 style="font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; margin: 0 0 10px 0; color: #171717;">Opening Starfix Admin Dashboard…</h1>
+                <p style="font-size: 13.5px; color: #737373; margin: 0 0 24px 0; line-height: 1.5;">Redirecting automatically to <strong>http://localhost:8443</strong></p>
+                <div style="background: #FAF8F4; border: 1px solid #ECE7DF; border-radius: 8px; padding: 14px; margin-bottom: 24px;">
+                  <a href="http://localhost:8443" style="color: #C89B1F; font-family: monospace; font-size: 15px; font-weight: 600; text-decoration: none;">http://localhost:8443</a>
+                </div>
+                <a href="http://localhost:8443" style="display: inline-block; background: #171717; color: white; padding: 12px 28px; border-radius: 8px; font-size: 13.5px; font-weight: 500; text-decoration: none;">Open Dashboard Now</a>
+              </div>
+            </div>
+          `;
+        });
+      }
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
