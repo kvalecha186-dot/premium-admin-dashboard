@@ -31,8 +31,6 @@ import {
   TOP_HIRING_DOMAINS,
   SALARY_BY_DOMAIN,
   PLACEMENT_TREND,
-  COHORTS,
-  isLowPerformingCohort,
   REVENUE,
   REVENUE_MONTHLY_TREND,
   REVENUE_BY_PATH,
@@ -923,78 +921,6 @@ export default function GrowthIntelligenceView() {
           </Card>
 
         </div>
-      )}
-
-
-      {/* SECTION 10: COHORT ANALYTICS TABLE */}
-      {(activeTab === 'all' || activeTab === 'cohorts') && (
-        <Card style={{ padding: 26, marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <div>
-              <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 19, fontWeight: 600, color: '#171717' }}>
-                Cohort Analytics (15 Learner Batches)
-              </div>
-              <div style={{ fontSize: 12.5, color: '#737373', marginTop: 2 }}>
-                Batch lifecycle tracking, progress, satisfaction, and low-performing cohort highlights
-              </div>
-            </div>
-          </div>
-
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 12.5 }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #ECE7DF', background: '#FAF8F4' }}>
-                  <th style={{ padding: '10px 14px', fontSize: 11, fontWeight: 600, color: '#737373', textTransform: 'uppercase' }}>Cohort Name</th>
-                  <th style={{ padding: '10px 14px', fontSize: 11, fontWeight: 600, color: '#737373', textTransform: 'uppercase' }}>Start Date</th>
-                  <th style={{ padding: '10px 14px', fontSize: 11, fontWeight: 600, color: '#737373', textTransform: 'uppercase' }}>Total Learners</th>
-                  <th style={{ padding: '10px 14px', fontSize: 11, fontWeight: 600, color: '#737373', textTransform: 'uppercase' }}>Active</th>
-                  <th style={{ padding: '10px 14px', fontSize: 11, fontWeight: 600, color: '#737373', textTransform: 'uppercase' }}>Completion</th>
-                  <th style={{ padding: '10px 14px', fontSize: 11, fontWeight: 600, color: '#737373', textTransform: 'uppercase' }}>Mentors</th>
-                  <th style={{ padding: '10px 14px', fontSize: 11, fontWeight: 600, color: '#737373', textTransform: 'uppercase' }}>Satisfaction</th>
-                  <th style={{ padding: '10px 14px', fontSize: 11, fontWeight: 600, color: '#737373', textTransform: 'uppercase' }}>Progress</th>
-                </tr>
-              </thead>
-              <tbody>
-                {COHORTS.map(c => {
-                  const isLow = isLowPerformingCohort(c)
-                  return (
-                    <tr key={c.id} style={{
-                      borderBottom: '1px solid #ECE7DF',
-                      background: isLow ? '#FEF2F2' : 'transparent'
-                    }}>
-                      <td style={{ padding: '12px 14px', fontWeight: 600, color: isLow ? theme.red : '#171717' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          {c.name}
-                          {isLow && (
-                            <span style={{ fontSize: 10, fontWeight: 600, color: theme.red, background: '#FCA5A5', padding: '1px 6px', borderRadius: 4 }}>
-                              Needs Review
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td style={{ padding: '12px 14px', color: '#737373' }}>{c.startDate}</td>
-                      <td style={{ padding: '12px 14px', color: '#171717' }}>{c.learners}</td>
-                      <td style={{ padding: '12px 14px', color: '#525252' }}>{c.activeLearners}</td>
-                      <td style={{ padding: '12px 14px', fontWeight: 500, color: '#171717' }}>{c.completion}%</td>
-                      <td style={{ padding: '12px 14px', color: '#525252' }}>{c.activeMentors}</td>
-                      <td style={{ padding: '12px 14px', fontWeight: 600, color: c.satisfaction < 4 ? theme.red : theme.gold }}>
-                        ★ {c.satisfaction}
-                      </td>
-                      <td style={{ padding: '12px 14px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ fontSize: 11.5, fontWeight: 600, color: '#171717', width: 32 }}>{c.progress}%</span>
-                          <div style={{ width: 60, height: 4, background: '#FAF8F4', borderRadius: 99, border: '1px solid #ECE7DF' }}>
-                            <div style={{ width: `${c.progress}%`, height: '100%', background: isLow ? theme.red : theme.gold, borderRadius: 99 }} />
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </Card>
       )}
 
 
