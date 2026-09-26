@@ -5,11 +5,12 @@ import GrowthIntelligenceView from './analytics/GrowthIntelligenceView'
 import OverviewPage from './overview/OverviewPage'
 import GrowthPathsPage from './growthpaths/GrowthPathsPage'
 import SettingsPage from './settings/SettingsPage'
+import SecurityPage from './security/SecurityPage'
 import { CATEGORIES, pathsByCategory, type Category } from './mentors/data'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type Page = 'overview' | 'users' | 'paths' | 'mentors' | 'analytics' | 'settings'
+type Page = 'overview' | 'users' | 'paths' | 'mentors' | 'analytics' | 'settings' | 'security'
 
 // ── Sidebar Component ─────────────────────────────────────────────────────────
 
@@ -59,6 +60,7 @@ function Sidebar({ page, setPage }: { page: Page; setPage: (p: Page) => void }) 
     {
       title: 'SYSTEM',
       items: [
+        { id: 'security', label: 'Security', icon: 'shieldCheck' },
         { id: 'settings', label: 'Settings', icon: 'settings' },
       ]
     }
@@ -478,6 +480,7 @@ export default function App() {
           {page === 'paths' && <GrowthPathsPage />}
           {page === 'mentors' && <MentorsSection />}
           {page === 'analytics' && <GrowthIntelligenceView />}
+          {page === 'security' && <SecurityPage />}
           {page === 'settings' && <SettingsPage />}
         </main>
       </div>
