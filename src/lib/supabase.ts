@@ -1,25 +1,12 @@
-import { createClient } from '@supabase/supabase-js'
-
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mndyaxvkjzzgyvfrxgvm.supabase.co'
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_oSRryTseVP0tCs0kSTeWCQ_wG1ydeb'
-
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
-})
-
-export async function requireAdmin() {
-  const { data: { user }, error } = await supabase.auth.getUser()
-  if (error || !user) return { user: null, profile: null, error: error || new Error('Not signed in') }
-
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('id,full_name,email,avatar_url,role')
-    .eq('id', user.id)
-    .single()
-
-  if (profileError || profile?.role !== 'admin') {
-    await supabase.auth.signOut()
-    return { user: null, profile: null, error: new Error('This account is not an administrator.') }
-  }
-  return { user, profile, error: null }
-}
+const URL = import.meta.env.VITE_SUPABASE_URL || 'https://mndyaxvkjzzgyvfrxgvm.supabase.co'
+const KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_oSRryTseVP0tCs0kSTeWCQ_wG1ydeb'
+const ACCESS='starfix_admin_access', REFRESH='starfix_admin_refresh'
+type Auth={access_token:string;refresh_token:string;expires_at?:number}
+function auth():Auth|null{try{return JSON.parse(localStorage.getItem(ACCESS)||'null')}catch{return null}}
+function save(a:Auth){localStorage.setItem(ACCESS,JSON.stringify(a));localStorage.setItem(REFRESH,a.refresh_token||'')}
+async function token(){const a=auth();if(a?.access_token&&(!a.expires_at||a.expires_at*1000>Date.now()+30000))return a.access_token;const refresh=a?.refresh_token||localStorage.getItem(REFRESH);if(!refresh)return null;const r=await fetch(URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:refresh})});if(!r.ok){await signOutAdmin();return null}const j=await r.json();save(j);return j.access_token}
+export async function authRequest(path:string,init:RequestInit={}){const t=await token();if(!t)throw new Error('Not signed in');const headers=new Headers(init.headers);headers.set('apikey',KEY);headers.set('Authorization','Bearer '+t);headers.set('Content-Type','application/json');const r=await fetch(URL+path,{...init,headers});if(r.status===401){await signOutAdmin();throw new Error('Session expired. Please sign in again.')}return r}
+export async function db(path:string){const r=await authRequest('/rest/v1/'+path);const text=await r.text();if(!r.ok)throw new Error(text||('Supabase request failed: '+r.status));return text?JSON.parse(text):null}
+export async function signIn(email:string,password:string){const r=await fetch(URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password})});const j=await r.json();if(!r.ok)throw new Error(j.error_description||j.msg||'Sign in failed');save(j);return j}
+export async function signOutAdmin(){localStorage.removeItem(ACCESS);localStorage.removeItem(REFRESH)}
+export async function requireAdmin(){const r=await authRequest('/auth/v1/user');const user=await r.json();const rows=await db('profiles?select=id,full_name,email,avatar_url,role&id=eq.'+encodeURIComponent(user.id)+'&limit=1');const profile=rows?.[0];if(!profile||profile.role!=='admin'){await signOutAdmin();return{user:null,profile:null,error:new Error('This account is not an administrator.')}}return{user,profile,error:null}}
