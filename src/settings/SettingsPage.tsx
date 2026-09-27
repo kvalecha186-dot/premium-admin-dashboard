@@ -63,6 +63,103 @@ const ADMIN_ROLES = [
   { name: 'David Miller', email: 'david@starfix.com', role: 'Billing Admin', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=faces' },
 ]
 
+// Read-only audit trail shown in the context rail — ties Settings back into
+// the same activity-log pattern used on the Security page, rather than
+// inventing a one-off list style just for this screen.
+const RECENT_CHANGES: { label: string; admin: string; time: string; icon: keyof typeof icons }[] = [
+  { label: 'Commission rate changed to 15%', admin: 'Marcus Webb', time: '2 days ago', icon: 'dollar' },
+  { label: '2FA enforced for all admins', admin: 'Elena Rostova', time: '5 days ago', icon: 'shieldCheck' },
+  { label: 'Payout schedule set to Weekly', admin: 'Marcus Webb', time: '1 week ago', icon: 'clock' },
+]
+
+const TABS: { id: SettingsTab; label: string; icon: keyof typeof icons }[] = [
+  { id: 'general', label: 'General', icon: 'settings' },
+  { id: 'branding', label: 'Branding', icon: 'star' },
+  { id: 'payments', label: 'Payments', icon: 'dollar' },
+  { id: 'security', label: 'Security', icon: 'shieldCheck' },
+]
+
+// A field input with a small leading icon, sized and colored to match the
+// rest of the ivory/gold form language rather than a bare browser input.
+function FieldInput({
+  icon, type = 'text', value, onChange, placeholder,
+}: {
+  icon?: keyof typeof icons
+  type?: string
+  value: string | number
+  onChange: (v: string) => void
+  placeholder?: string
+}) {
+  return (
+    <div style={{ position: 'relative' }}>
+      {icon && (
+        <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#B8AF9E', display: 'flex' }}>
+          <Icon d={icons[icon]} size={15} />
+        </span>
+      )}
+      <input
+        type={type}
+        value={value}
+        placeholder={placeholder}
+        onChange={e => onChange(e.target.value)}
+        style={{
+          width: '100%',
+          padding: icon ? '11px 14px 11px 40px' : '11px 14px',
+          borderRadius: 10,
+          border: '1px solid #ECE7DF',
+          background: '#FAF8F4',
+          fontSize: 13.5,
+          color: '#171717',
+          outline: 'none',
+          transition: 'border-color 150ms ease, background 150ms ease',
+          fontFamily: 'Inter, sans-serif',
+        }}
+        onFocus={e => { e.target.style.borderColor = '#C89B1F'; e.target.style.background = '#FFFFFF' }}
+        onBlur={e => { e.target.style.borderColor = '#ECE7DF'; e.target.style.background = '#FAF8F4' }}
+      />
+    </div>
+  )
+}
+
+function FieldLabel({ children, hint }: { children: React.ReactNode; hint?: string }) {
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <label style={{ fontSize: 12.5, fontWeight: 600, color: '#171717' }}>{children}</label>
+      {hint && <div style={{ fontSize: 11.5, color: '#8E8E93', marginTop: 1 }}>{hint}</div>}
+    </div>
+  )
+}
+
+function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        width: 44, height: 24, borderRadius: 99, border: 'none', cursor: 'pointer', flexShrink: 0,
+        background: on ? '#C89B1F' : '#E5E5EA', position: 'relative', transition: 'background 200ms ease', padding: 2,
+      }}
+    >
+      <div style={{
+        width: 20, height: 20, borderRadius: '50%', background: '#FFFFFF',
+        transform: on ? 'translateX(20px)' : 'translateX(0px)', transition: 'transform 200ms ease',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+      }} />
+    </button>
+  )
+}
+
+// A small section header used to introduce each Card — keeps every card
+// grounded in what it's for, at a consistent, quiet type scale.
+function SectionHeading({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ fontSize: 15, fontWeight: 600, color: '#171717' }}>{title}</div>
+      <div style={{ fontSize: 12.5, color: '#8E8E93', marginTop: 3 }}>{subtitle}</div>
+    </div>
+  )
+}
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('general')
 
@@ -75,6 +172,7 @@ export default function SettingsPage() {
   // Toast notification state
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [lastSavedLabel, setLastSavedLabel] = useState('No changes saved this session')
 
   const showToast = (msg: string) => {
     setToastMessage(msg)
@@ -96,21 +194,14 @@ export default function SettingsPage() {
 
   const isCurrentTabDirty = dirtyTabMap[activeTab]
 
-  // Save handler for current active tab
   const handleSave = () => {
     setIsSaving(true)
     setTimeout(() => {
       setIsSaving(false)
+      setLastSavedLabel('Just now')
       showToast(`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} settings updated successfully`)
     }, 600)
   }
-
-  const tabs: { id: SettingsTab; label: string }[] = [
-    { id: 'general', label: 'General' },
-    { id: 'branding', label: 'Branding' },
-    { id: 'payments', label: 'Payments' },
-    { id: 'security', label: 'Security' },
-  ]
 
   return (
     <PageShell
@@ -120,342 +211,174 @@ export default function SettingsPage() {
       {/* Toast Notification */}
       {toastMessage && (
         <div style={{
-          position: 'fixed',
-          bottom: 28,
-          right: 28,
-          background: '#171717',
-          color: '#FFFFFF',
-          padding: '12px 20px',
-          borderRadius: 12,
-          fontSize: 13,
-          fontWeight: 500,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-          zIndex: 100,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          border: '1px solid rgba(200, 155, 31, 0.3)'
+          position: 'fixed', bottom: 28, right: 28, background: '#171717', color: '#FFFFFF',
+          padding: '12px 20px', borderRadius: 12, fontSize: 13, fontWeight: 500,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 100, display: 'flex', alignItems: 'center', gap: 10,
+          border: '1px solid rgba(200, 155, 31, 0.3)',
         }}>
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#C89B1F' }} />
           {toastMessage}
         </div>
       )}
 
-      {/* Main Container - Single Column Layout with Spacious Breathing Room */}
-      <div style={{ maxWidth: 740, margin: '0 auto', paddingBottom: 48 }}>
-        
-        {/* Navigation Tabs */}
-        <div style={{
-          display: 'flex',
-          gap: 8,
-          borderBottom: '1px solid #ECE7DF',
-          paddingBottom: 12,
-          marginBottom: 32,
-        }}>
-          {tabs.map(tab => {
-            const isActive = activeTab === tab.id
-            const isDirty = dirtyTabMap[tab.id]
+      {/* Two-zone layout: working content + a persistent context rail.
+          The rail fills the space that used to sit empty next to a narrow
+          centered card, and reflects the live state of the form (e.g. the
+          Public Site status chip below tracks the Maintenance Mode toggle). */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 296px', gap: 28, alignItems: 'flex-start' }}>
 
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '10px 20px',
-                  borderRadius: 12,
-                  border: 'none',
-                  background: isActive ? '#FAF8F4' : 'transparent',
-                  color: isActive ? '#171717' : '#737373',
-                  fontSize: 14,
-                  fontWeight: isActive ? 600 : 500,
-                  cursor: 'pointer',
-                  transition: 'all 180ms ease',
-                  position: 'relative',
-                  borderBottom: isActive ? '2px solid #C89B1F' : '2px solid transparent'
-                }}
-              >
-                {tab.label}
-                {isDirty && (
-                  <span
-                    title="Unsaved changes"
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      background: '#C89B1F',
-                      display: 'inline-block',
-                    }}
-                  />
-                )}
-              </button>
-            )
-          })}
-        </div>
+        {/* ── LEFT: Tabs + working content ─────────────────────────────── */}
+        <div>
+          {/* Tabs */}
+          <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #ECE7DF', marginBottom: 24 }}>
+            {TABS.map(tab => {
+              const isActive = activeTab === tab.id
+              const isDirty = dirtyTabMap[tab.id]
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 7,
+                    padding: '10px 16px', border: 'none', background: 'transparent',
+                    color: isActive ? '#171717' : '#8E8E93', fontSize: 13.5,
+                    fontWeight: isActive ? 600 : 500, cursor: 'pointer',
+                    borderBottom: isActive ? '2px solid #C89B1F' : '2px solid transparent',
+                    marginBottom: -1, transition: 'color 150ms ease',
+                  }}
+                >
+                  <Icon d={icons[tab.icon]} size={14} style={{ color: isActive ? '#C89B1F' : '#B8AF9E' }} />
+                  {tab.label}
+                  {isDirty && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#C89B1F', display: 'inline-block' }} />}
+                </button>
+              )
+            })}
+          </div>
 
-        {/* Tab Panel Content in 24px Radius White Card */}
-        <Card style={{
-          padding: '36px 40px',
-          borderRadius: 24,
-          boxShadow: '0 8px 32px rgba(23, 23, 23, 0.03)',
-          border: '1px solid #ECE7DF',
-          background: '#FFFFFF'
-        }}>
-          
           {/* TAB 1: GENERAL */}
           {activeTab === 'general' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-              <div>
-                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, fontWeight: 600, color: '#171717', margin: '0 0 4px 0' }}>
-                  General Platform Parameters
-                </h3>
-                <p style={{ fontSize: 13, color: '#737373', margin: 0 }}>
-                  Manage public identities and support channels for the Starfix ecosystem.
-                </p>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                {/* Platform Name */}
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#737373', display: 'block', marginBottom: 8, letterSpacing: '0.02em' }}>
-                    Platform Name
-                  </label>
-                  <input
-                    type="text"
-                    value={general.platformName}
-                    onChange={e => setGeneral({ ...general, platformName: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      borderRadius: 12,
-                      border: '1px solid #ECE7DF',
-                      background: '#FAF8F4',
-                      fontSize: 14,
-                      color: '#171717',
-                      outline: 'none',
-                      transition: 'border-color 150ms ease'
-                    }}
-                    onFocus={e => (e.target.style.borderColor = '#C89B1F')}
-                    onBlur={e => (e.target.style.borderColor = '#ECE7DF')}
-                  />
-                </div>
-
-                {/* Support Email */}
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#737373', display: 'block', marginBottom: 8, letterSpacing: '0.02em' }}>
-                    Support Email Address
-                  </label>
-                  <input
-                    type="email"
-                    value={general.supportEmail}
-                    onChange={e => setGeneral({ ...general, supportEmail: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      borderRadius: 12,
-                      border: '1px solid #ECE7DF',
-                      background: '#FAF8F4',
-                      fontSize: 14,
-                      color: '#171717',
-                      outline: 'none',
-                      transition: 'border-color 150ms ease'
-                    }}
-                    onFocus={e => (e.target.style.borderColor = '#C89B1F')}
-                    onBlur={e => (e.target.style.borderColor = '#ECE7DF')}
-                  />
-                </div>
-
-                {/* Public Website URL */}
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#737373', display: 'block', marginBottom: 8, letterSpacing: '0.02em' }}>
-                    Public Website URL
-                  </label>
-                  <input
-                    type="url"
-                    value={general.publicWebsiteUrl}
-                    onChange={e => setGeneral({ ...general, publicWebsiteUrl: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      borderRadius: 12,
-                      border: '1px solid #ECE7DF',
-                      background: '#FAF8F4',
-                      fontSize: 14,
-                      color: '#171717',
-                      outline: 'none',
-                      transition: 'border-color 150ms ease'
-                    }}
-                    onFocus={e => (e.target.style.borderColor = '#C89B1F')}
-                    onBlur={e => (e.target.style.borderColor = '#ECE7DF')}
-                  />
-                </div>
-
-                {/* Maintenance Mode Toggle */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '16px 20px',
-                  borderRadius: 16,
-                  background: '#FAF8F4',
-                  border: '1px solid #ECE7DF',
-                  marginTop: 8
-                }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <Card>
+                <SectionHeading title="Platform Identity" subtitle="Public name and support channels shown to learners and mentors." />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: '#171717' }}>Maintenance Mode</div>
-                    <div style={{ fontSize: 12, color: '#737373', marginTop: 2 }}>
+                    <FieldLabel>Platform Name</FieldLabel>
+                    <FieldInput value={general.platformName} onChange={v => setGeneral({ ...general, platformName: v })} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+                    <div>
+                      <FieldLabel>Support Email Address</FieldLabel>
+                      <FieldInput icon="mail" type="email" value={general.supportEmail} onChange={v => setGeneral({ ...general, supportEmail: v })} />
+                    </div>
+                    <div>
+                      <FieldLabel>Public Website URL</FieldLabel>
+                      <FieldInput icon="link" type="url" value={general.publicWebsiteUrl} onChange={v => setGeneral({ ...general, publicWebsiteUrl: v })} />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Maintenance Mode gets its own, visually distinct card —
+                  this is an operationally sensitive control, so it shouldn't
+                  look identical to a routine text field. */}
+              <div style={{
+                borderRadius: 14, border: '1px solid #F3DFA3', background: '#FFFBEB',
+                padding: 22, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F7E7B8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon d={icons.alert} size={17} style={{ color: '#92400E' }} />
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: '#171717' }}>Maintenance Mode</span>
+                      <span style={{
+                        fontSize: 10.5, fontWeight: 600, padding: '2px 8px', borderRadius: 99,
+                        color: general.maintenanceMode ? '#B91C1C' : '#166534',
+                        background: general.maintenanceMode ? '#FEE2E2' : '#DCFCE7',
+                      }}>
+                        {general.maintenanceMode ? 'Site Offline' : 'Site Is Live'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 12, color: '#8A6D2F', marginTop: 3, maxWidth: 380 }}>
                       Temporarily restrict public learner access to schedule core platform upgrades.
                     </div>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setGeneral({ ...general, maintenanceMode: !general.maintenanceMode })}
-                    style={{
-                      width: 48,
-                      height: 26,
-                      borderRadius: 99,
-                      background: general.maintenanceMode ? '#C89B1F' : '#E5E5EA',
-                      border: 'none',
-                      cursor: 'pointer',
-                      position: 'relative',
-                      transition: 'background 200ms ease',
-                      padding: 2
-                    }}
-                  >
-                    <div style={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: '50%',
-                      background: '#FFFFFF',
-                      transform: general.maintenanceMode ? 'translateX(22px)' : 'translateX(0px)',
-                      transition: 'transform 200ms ease',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
-                    }} />
-                  </button>
                 </div>
+                <Toggle on={general.maintenanceMode} onClick={() => setGeneral({ ...general, maintenanceMode: !general.maintenanceMode })} />
               </div>
             </div>
           )}
 
           {/* TAB 2: BRANDING */}
           {activeTab === 'branding' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-              <div>
-                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, fontWeight: 600, color: '#171717', margin: '0 0 4px 0' }}>
-                  Brand Assets & Identity
-                </h3>
-                <p style={{ fontSize: 13, color: '#737373', margin: 0 }}>
-                  Upload high-resolution logos and inspect real-time navigation previews.
-                </p>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                {/* Upload Logo */}
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#737373', display: 'block', marginBottom: 8, letterSpacing: '0.02em' }}>
-                    Primary Starfix Logo (SVG / PNG)
-                  </label>
-                  <div style={{
-                    border: '1.5px dashed #ECE7DF',
-                    borderRadius: 16,
-                    padding: '24px',
-                    textAlign: 'center',
-                    background: '#FAF8F4',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 10
-                  }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 10, background: '#171717', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon d={icons.star} size={20} style={{ color: '#C89B1F' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <Card>
+                <SectionHeading title="Brand Assets" subtitle="Upload high-resolution logos and favicons for the Starfix ecosystem." />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div>
+                    <FieldLabel>Primary Logo (SVG / PNG)</FieldLabel>
+                    <div style={{
+                      border: '1.5px dashed #ECE7DF', borderRadius: 14, padding: '20px 22px',
+                      background: '#FAF8F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14,
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <div style={{ width: 38, height: 38, borderRadius: 10, background: '#171717', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Icon d={icons.star} size={18} style={{ color: '#C89B1F' }} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#171717' }}>{branding.logoFileName}</div>
+                          <div style={{ fontSize: 11, color: '#8E8E93' }}>Recommended: 400×100px vector format</div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setBranding({ ...branding, logoFileName: 'starfix-custom-logo-v2.svg' })}
+                        style={{ fontSize: 12, fontWeight: 600, color: '#171717', background: '#FFFFFF', border: '1px solid #ECE7DF', padding: '7px 14px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                      >
+                        Choose New File
+                      </button>
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#171717' }}>{branding.logoFileName}</div>
-                    <div style={{ fontSize: 11.5, color: '#8E8E93' }}>Recommended dimensions: 400×100px vector format</div>
-                    <button
-                      type="button"
-                      onClick={() => setBranding({ ...branding, logoFileName: 'starfix-custom-logo-v2.svg' })}
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: '#171717',
-                        background: '#FFFFFF',
-                        border: '1px solid #ECE7DF',
-                        padding: '6px 14px',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                        marginTop: 4
-                      }}
-                    >
-                      Choose New File
-                    </button>
+                  </div>
+
+                  <div>
+                    <FieldLabel>Browser Favicon (ICO / PNG 32×32)</FieldLabel>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderRadius: 14, background: '#FAF8F4', border: '1px solid #ECE7DF' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 8, background: '#171717', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Icon d={icons.star} size={14} style={{ color: '#C89B1F' }} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#171717' }}>{branding.faviconFileName}</div>
+                          <div style={{ fontSize: 11, color: '#8E8E93' }}>32×32px transparent PNG</div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setBranding({ ...branding, faviconFileName: 'starfix-favicon-v2.png' })}
+                        style={{ fontSize: 12, fontWeight: 600, color: '#171717', background: '#FFFFFF', border: '1px solid #ECE7DF', padding: '7px 14px', borderRadius: 8, cursor: 'pointer' }}
+                      >
+                        Replace
+                      </button>
+                    </div>
                   </div>
                 </div>
+              </Card>
 
-                {/* Upload Favicon */}
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#737373', display: 'block', marginBottom: 8, letterSpacing: '0.02em' }}>
-                    Browser Favicon (ICO / PNG 32×32)
-                  </label>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '16px 20px',
-                    borderRadius: 16,
-                    background: '#FAF8F4',
-                    border: '1px solid #ECE7DF'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 8, background: '#171717', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Icon d={icons.star} size={14} style={{ color: '#C89B1F' }} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#171717' }}>{branding.faviconFileName}</div>
-                        <div style={{ fontSize: 11, color: '#8E8E93' }}>32×32px transparent PNG</div>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setBranding({ ...branding, faviconFileName: 'starfix-favicon-v2.png' })}
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 600,
-                        color: '#171717',
-                        background: '#FFFFFF',
-                        border: '1px solid #ECE7DF',
-                        padding: '6px 14px',
-                        borderRadius: 8,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Replace Favicon
-                    </button>
-                  </div>
-                </div>
-
-                {/* Previews Section */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 8 }}>
-                  {/* Navbar Logo Preview */}
-                  <div style={{ padding: 18, borderRadius: 16, border: '1px solid #ECE7DF', background: '#FFFFFF' }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', marginBottom: 12 }}>
-                      Navbar Logo Preview
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#FAF8F4', borderRadius: 10, border: '1px solid #ECE7DF' }}>
+              <Card>
+                <SectionHeading title="Live Preview" subtitle="How the mark renders across the learner site and this admin panel." />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  <div style={{ padding: 16, borderRadius: 12, border: '1px solid #ECE7DF', background: '#FAF8F4' }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#8E8E93', marginBottom: 10 }}>Navbar</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#FFFFFF', borderRadius: 10, border: '1px solid #ECE7DF' }}>
                       <div style={{ width: 26, height: 26, borderRadius: 6, background: '#171717', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Icon d={icons.star} size={13} style={{ color: '#C89B1F' }} />
                       </div>
                       <span style={{ fontFamily: 'Playfair Display, serif', fontWeight: 600, fontSize: 15, color: '#171717' }}>Starfix</span>
                     </div>
                   </div>
-
-                  {/* Admin Sidebar Logo Preview */}
-                  <div style={{ padding: 18, borderRadius: 16, border: '1px solid #ECE7DF', background: '#FFFFFF' }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', marginBottom: 12 }}>
-                      Sidebar Logo Preview
-                    </div>
+                  <div style={{ padding: 16, borderRadius: 12, border: '1px solid #ECE7DF', background: '#FAF8F4' }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#8E8E93', marginBottom: 10 }}>Admin Sidebar</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#171717', borderRadius: 10 }}>
                       <div style={{ width: 26, height: 26, borderRadius: 6, background: 'rgba(200, 155, 31, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Icon d={icons.star} size={13} style={{ color: '#C89B1F' }} />
@@ -467,346 +390,241 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </Card>
             </div>
           )}
 
           {/* TAB 3: PAYMENTS */}
           {activeTab === 'payments' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-              <div>
-                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, fontWeight: 600, color: '#171717', margin: '0 0 4px 0' }}>
-                  Payments & Revenue Configuration
-                </h3>
-                <p style={{ fontSize: 13, color: '#737373', margin: 0 }}>
-                  Manage payout frequency, platform take rates, and inspect subscription plan defaults.
-                </p>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-                {/* Stripe Connection Status */}
-                <div style={{
-                  padding: '20px 24px',
-                  borderRadius: 16,
-                  background: '#FAF8F4',
-                  border: '1px solid #ECE7DF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
-                }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <Card>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: '#171717' }}>Stripe Connect Integration</span>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#166534', background: '#DCFCE7', padding: '2px 8px', borderRadius: 99 }}>
-                        ● Connected
+                      <span style={{ fontSize: 15, fontWeight: 600, color: '#171717' }}>Stripe Connect</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#166534', background: '#DCFCE7', padding: '2px 8px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#166534' }} />
+                        Connected
                       </span>
                     </div>
-                    <div style={{ fontSize: 12, color: '#737373', marginTop: 4 }}>
-                      Connected Account ID: <code style={{ color: '#171717', fontWeight: 600 }}>acct_1N9xStarfixLive</code>
+                    <div style={{ fontSize: 12, color: '#8E8E93', marginTop: 5 }}>
+                      Account ID: <code style={{ color: '#171717', fontWeight: 600 }}>acct_1N9xStarfixLive</code>
                     </div>
                   </div>
-
                   <button
                     type="button"
-                    onClick={() => showToast('Redirecting to Stripe Express Dashboard...')}
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 600,
-                      color: '#171717',
-                      background: '#FFFFFF',
-                      border: '1px solid #ECE7DF',
-                      padding: '8px 14px',
-                      borderRadius: 10,
-                      cursor: 'pointer'
-                    }}
+                    onClick={() => showToast('Redirecting to Stripe Express Dashboard…')}
+                    style={{ fontSize: 12, fontWeight: 600, color: '#171717', background: '#FFFFFF', border: '1px solid #ECE7DF', padding: '8px 16px', borderRadius: 10, cursor: 'pointer' }}
                   >
                     Manage Account
                   </button>
                 </div>
+              </Card>
 
-                {/* Mentor Payout Schedule */}
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#737373', display: 'block', marginBottom: 8, letterSpacing: '0.02em' }}>
-                    Mentor Payout Schedule
-                  </label>
-                  <select
-                    value={payments.payoutSchedule}
-                    onChange={e => setPayments({ ...payments, payoutSchedule: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      borderRadius: 12,
-                      border: '1px solid #ECE7DF',
-                      background: '#FAF8F4',
-                      fontSize: 14,
-                      color: '#171717',
-                      outline: 'none',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <option value="Weekly (Every Monday)">Weekly (Every Monday)</option>
-                    <option value="Bi-weekly (1st & 15th)">Bi-weekly (1st & 15th)</option>
-                    <option value="Monthly (1st of Month)">Monthly (1st of Month)</option>
-                  </select>
-                </div>
-
-                {/* Platform Commission % */}
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#737373', display: 'block', marginBottom: 8, letterSpacing: '0.02em' }}>
-                    Platform Commission Take Rate (%)
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      value={payments.commissionPct}
-                      onChange={e => setPayments({ ...payments, commissionPct: Number(e.target.value) })}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        borderRadius: 12,
-                        border: '1px solid #ECE7DF',
-                        background: '#FAF8F4',
-                        fontSize: 14,
-                        color: '#171717',
-                        outline: 'none'
-                      }}
-                    />
-                    <span style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', fontSize: 13, fontWeight: 600, color: '#8E8E93' }}>
-                      %
-                    </span>
+              <Card>
+                <SectionHeading title="Payout Rules" subtitle="Mentor payment frequency and Starfix's platform take rate." />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+                  <div>
+                    <FieldLabel>Mentor Payout Schedule</FieldLabel>
+                    <select
+                      value={payments.payoutSchedule}
+                      onChange={e => setPayments({ ...payments, payoutSchedule: e.target.value })}
+                      style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid #ECE7DF', background: '#FAF8F4', fontSize: 13.5, color: '#171717', outline: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+                    >
+                      <option value="Weekly (Every Monday)">Weekly (Every Monday)</option>
+                      <option value="Bi-weekly (1st & 15th)">Bi-weekly (1st &amp; 15th)</option>
+                      <option value="Monthly (1st of Month)">Monthly (1st of Month)</option>
+                    </select>
                   </div>
-                  <div style={{ fontSize: 11.5, color: '#8E8E93', marginTop: 4 }}>
-                    Starfix receives {payments.commissionPct}%, while mentors receive {100 - payments.commissionPct}% of session fees.
+                  <div>
+                    <FieldLabel>Platform Commission Rate</FieldLabel>
+                    <FieldInput icon="dollar" type="number" value={payments.commissionPct} onChange={v => setPayments({ ...payments, commissionPct: Number(v) })} />
                   </div>
                 </div>
+                <div style={{ fontSize: 12, color: '#8E8E93', marginTop: 12 }}>
+                  Starfix receives <strong style={{ color: '#171717' }}>{payments.commissionPct}%</strong>, mentors receive <strong style={{ color: '#171717' }}>{100 - payments.commissionPct}%</strong> of every session fee.
+                </div>
+              </Card>
 
-                {/* Subscription Plans Summary (Read-Only) */}
-                <div style={{ marginTop: 8 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#737373', letterSpacing: '0.02em', marginBottom: 10 }}>
-                    Active Subscription Plans Summary (Read-Only)
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {SUBSCRIPTION_PLANS.map(plan => (
-                      <div key={plan.name} style={{ padding: '14px 18px', borderRadius: 12, border: '1px solid #ECE7DF', background: '#FAF8F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div>
-                          <div style={{ fontSize: 13.5, fontWeight: 600, color: '#171717' }}>{plan.name}</div>
-                          <div style={{ fontSize: 11.5, color: '#737373', marginTop: 2 }}>{plan.features}</div>
-                        </div>
-                        <div style={{ fontSize: 13.5, fontWeight: 600, color: '#C89B1F' }}>{plan.price}</div>
+              <Card>
+                <SectionHeading title="Subscription Plans" subtitle="Current pricing tiers — read-only summary." />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {SUBSCRIPTION_PLANS.map(plan => (
+                    <div key={plan.name} style={{ padding: '13px 16px', borderRadius: 12, border: '1px solid #ECE7DF', background: '#FAF8F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#171717' }}>{plan.name}</div>
+                        <div style={{ fontSize: 11.5, color: '#8E8E93', marginTop: 2 }}>{plan.features}</div>
                       </div>
-                    ))}
-                  </div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#C89B1F', whiteSpace: 'nowrap' }}>{plan.price}</div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              </Card>
             </div>
           )}
 
           {/* TAB 4: SECURITY */}
           {activeTab === 'security' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-              <div>
-                <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, fontWeight: 600, color: '#171717', margin: '0 0 4px 0' }}>
-                  Security & Access Controls
-                </h3>
-                <p style={{ fontSize: 13, color: '#737373', margin: 0 }}>
-                  Enforce authentication safeguards, session expirations, and review administrator roles.
-                </p>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-                {/* Two-Factor Authentication */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '16px 20px',
-                  borderRadius: 16,
-                  background: '#FAF8F4',
-                  border: '1px solid #ECE7DF'
-                }}>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: '#171717' }}>Two-Factor Authentication (2FA)</div>
-                    <div style={{ fontSize: 12, color: '#737373', marginTop: 2 }}>
-                      Require TOTP authenticator app verification for all admin logins.
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <Card>
+                <SectionHeading title="Authentication Policy" subtitle="Sign-in requirements enforced across every admin account." />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderRadius: 12, background: '#FAF8F4', border: '1px solid #ECE7DF' }}>
+                    <div>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: '#171717' }}>Two-Factor Authentication</div>
+                      <div style={{ fontSize: 12, color: '#8E8E93', marginTop: 2 }}>Require a TOTP authenticator app for every admin login.</div>
                     </div>
+                    <Toggle on={security.twoFactorEnabled} onClick={() => setSecurity({ ...security, twoFactorEnabled: !security.twoFactorEnabled })} />
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setSecurity({ ...security, twoFactorEnabled: !security.twoFactorEnabled })}
-                    style={{
-                      width: 48,
-                      height: 26,
-                      borderRadius: 99,
-                      background: security.twoFactorEnabled ? '#C89B1F' : '#E5E5EA',
-                      border: 'none',
-                      cursor: 'pointer',
-                      position: 'relative',
-                      transition: 'background 200ms ease',
-                      padding: 2
-                    }}
-                  >
-                    <div style={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: '50%',
-                      background: '#FFFFFF',
-                      transform: security.twoFactorEnabled ? 'translateX(22px)' : 'translateX(0px)',
-                      transition: 'transform 200ms ease',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
-                    }} />
-                  </button>
-                </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderRadius: 12, background: '#FAF8F4', border: '1px solid #ECE7DF' }}>
+                    <div>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: '#171717' }}>New Device &amp; IP Alerts</div>
+                      <div style={{ fontSize: 12, color: '#8E8E93', marginTop: 2 }}>Email the admin immediately on an unrecognized login.</div>
+                    </div>
+                    <Toggle on={security.loginAlertsEnabled} onClick={() => setSecurity({ ...security, loginAlertsEnabled: !security.loginAlertsEnabled })} />
+                  </div>
 
-                {/* Session Timeout */}
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#737373', display: 'block', marginBottom: 8, letterSpacing: '0.02em' }}>
-                    Inactivity Session Timeout
-                  </label>
-                  <select
-                    value={security.sessionTimeout}
-                    onChange={e => setSecurity({ ...security, sessionTimeout: e.target.value })}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      borderRadius: 12,
-                      border: '1px solid #ECE7DF',
-                      background: '#FAF8F4',
-                      fontSize: 14,
-                      color: '#171717',
-                      outline: 'none',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <option value="15 minutes">15 minutes</option>
-                    <option value="30 minutes">30 minutes</option>
-                    <option value="1 hour">1 hour</option>
-                    <option value="4 hours">4 hours</option>
-                  </select>
-                </div>
-
-                {/* Admin Roles List */}
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: '#737373', letterSpacing: '0.02em' }}>
-                      Administrator Accounts & Roles
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => showToast('Invite modal triggered')}
-                      style={{ fontSize: 11.5, fontWeight: 600, color: '#C89B1F', background: 'none', border: 'none', cursor: 'pointer' }}
+                  <div>
+                    <FieldLabel>Inactivity Session Timeout</FieldLabel>
+                    <select
+                      value={security.sessionTimeout}
+                      onChange={e => setSecurity({ ...security, sessionTimeout: e.target.value })}
+                      style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid #ECE7DF', background: '#FAF8F4', fontSize: 13.5, color: '#171717', outline: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
                     >
-                      + Invite Admin
-                    </button>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {ADMIN_ROLES.map(adm => (
-                      <div key={adm.email} style={{ padding: '12px 16px', borderRadius: 12, border: '1px solid #ECE7DF', background: '#FAF8F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <img src={adm.avatar} alt={adm.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
-                          <div>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: '#171717' }}>{adm.name}</div>
-                            <div style={{ fontSize: 11, color: '#8E8E93' }}>{adm.email}</div>
-                          </div>
-                        </div>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: '#171717', background: '#FFFFFF', border: '1px solid #ECE7DF', padding: '3px 10px', borderRadius: 99 }}>
-                          {adm.role}
-                        </span>
-                      </div>
-                    ))}
+                      <option value="15 minutes">15 minutes</option>
+                      <option value="30 minutes">30 minutes</option>
+                      <option value="1 hour">1 hour</option>
+                      <option value="4 hours">4 hours</option>
+                    </select>
                   </div>
                 </div>
+              </Card>
 
-                {/* Login Alerts Toggle */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '16px 20px',
-                  borderRadius: 16,
-                  background: '#FAF8F4',
-                  border: '1px solid #ECE7DF'
-                }}>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: '#171717' }}>New Device & IP Login Alerts</div>
-                    <div style={{ fontSize: 12, color: '#737373', marginTop: 2 }}>
-                      Dispatch immediate security alert email on unrecognized admin logins.
-                    </div>
-                  </div>
-
+              <Card>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <SectionHeading title="Administrator Accounts" subtitle="Everyone with access to this panel, and their role." />
                   <button
                     type="button"
-                    onClick={() => setSecurity({ ...security, loginAlertsEnabled: !security.loginAlertsEnabled })}
-                    style={{
-                      width: 48,
-                      height: 26,
-                      borderRadius: 99,
-                      background: security.loginAlertsEnabled ? '#C89B1F' : '#E5E5EA',
-                      border: 'none',
-                      cursor: 'pointer',
-                      position: 'relative',
-                      transition: 'background 200ms ease',
-                      padding: 2
-                    }}
+                    onClick={() => showToast('Invite modal triggered')}
+                    style={{ fontSize: 12, fontWeight: 600, color: '#C89B1F', background: '#F7F2E7', border: 'none', padding: '7px 14px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', marginTop: -20 }}
                   >
-                    <div style={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: '50%',
-                      background: '#FFFFFF',
-                      transform: security.loginAlertsEnabled ? 'translateX(22px)' : 'translateX(0px)',
-                      transition: 'transform 200ms ease',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
-                    }} />
+                    + Invite Admin
                   </button>
                 </div>
-              </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {ADMIN_ROLES.map(adm => (
+                    <div key={adm.email} style={{ padding: '11px 14px', borderRadius: 12, border: '1px solid #ECE7DF', background: '#FAF8F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <img src={adm.avatar} alt={adm.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#171717' }}>{adm.name}</div>
+                          <div style={{ fontSize: 11, color: '#8E8E93' }}>{adm.email}</div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#171717', background: '#FFFFFF', border: '1px solid #ECE7DF', padding: '3px 10px', borderRadius: 99 }}>
+                        {adm.role}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+
+              <a
+                href="#security"
+                onClick={e => e.preventDefault()}
+                style={{ fontSize: 12.5, color: '#8E8E93', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <Icon d={icons.eye} size={13} />
+                Looking for active sessions and login history? See the <span style={{ color: '#C89B1F', fontWeight: 600 }}>Security</span> page.
+              </a>
             </div>
           )}
 
-          {/* Dynamic Save Action Footer - Appears ONLY when changes exist on current tab */}
+          {/* Save Action Footer — appears only when the current tab has unsaved changes */}
           {isCurrentTabDirty && (
             <div style={{
-              marginTop: 36,
-              paddingTop: 20,
-              borderTop: '1px solid #ECE7DF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              animation: 'fadeIn 200ms ease-in-out'
+              marginTop: 20, padding: '16px 20px', borderRadius: 14, background: '#171717',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#737373' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#D4D4D4' }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#C89B1F' }} />
-                You have unsaved changes in {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                Unsaved changes in {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
               </div>
-
               <button
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving}
                 style={{
-                  background: '#171717',
-                  color: '#FFFFFF',
-                  padding: '12px 24px',
-                  borderRadius: 12,
-                  fontSize: 13.5,
-                  fontWeight: 600,
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(23, 23, 23, 0.15)',
-                  transition: 'all 150ms ease',
-                  opacity: isSaving ? 0.7 : 1
+                  background: '#C89B1F', color: '#171717', padding: '10px 20px', borderRadius: 10,
+                  fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', opacity: isSaving ? 0.7 : 1,
                 }}
               >
-                {isSaving ? 'Saving...' : 'Save Changes'}
+                {isSaving ? 'Saving…' : 'Save Changes'}
               </button>
             </div>
           )}
+        </div>
 
-        </Card>
+        {/* ── RIGHT: Context rail — persistent across every tab ────────── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, position: 'sticky', top: 24 }}>
+
+          <Card style={{ padding: 20 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 600, color: '#8E8E93', marginBottom: 14 }}>Environment</div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 12.5, color: '#525252' }}>Environment</span>
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: '#166534', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#166534' }} />
+                  Production
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 12.5, color: '#525252' }}>Public site</span>
+                <span style={{
+                  fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 99,
+                  color: general.maintenanceMode ? '#B91C1C' : '#166534',
+                  background: general.maintenanceMode ? '#FEE2E2' : '#DCFCE7',
+                }}>
+                  {general.maintenanceMode ? 'Offline' : 'Live'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 12.5, color: '#525252' }}>Last saved</span>
+                <span style={{ fontSize: 12, fontWeight: 500, color: '#171717' }}>{lastSavedLabel}</span>
+              </div>
+            </div>
+
+            <div style={{ height: 1, background: '#ECE7DF', margin: '16px 0' }} />
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=faces" alt="Marcus Webb" style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover' }} />
+              <div>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: '#171717' }}>Marcus Webb</div>
+                <div style={{ fontSize: 11, color: '#8E8E93' }}>Signed in · Head of Platform</div>
+              </div>
+            </div>
+          </Card>
+
+          <Card style={{ padding: 20 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 600, color: '#8E8E93', marginBottom: 14 }}>Recent Changes</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {RECENT_CHANGES.map((c, i) => (
+                <div key={i} style={{ display: 'flex', gap: 10 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: 8, background: '#F7F2E7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon d={icons[c.icon]} size={13} style={{ color: '#C89B1F' }} />
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 12, color: '#171717', lineHeight: 1.4 }}>{c.label}</div>
+                    <div style={{ fontSize: 11, color: '#8E8E93', marginTop: 2 }}>{c.admin} · {c.time}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+        </div>
       </div>
     </PageShell>
   )
