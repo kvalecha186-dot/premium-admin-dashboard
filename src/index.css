@@ -70,18 +70,30 @@ body {
 }
 
 
-.admin-splash{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%,#241b08 0%,#0d0c0a 38%,#050505 100%);color:#fff;overflow:hidden;opacity:1;transition:opacity 550ms ease}
+.admin-splash{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%,#181206 0%,#0b0a09 42%,#080808 100%);color:#fff;overflow:hidden;opacity:1;transition:opacity 600ms ease}
 .admin-splash-exit{opacity:0;pointer-events:none}
+.admin-splash-static{transition:opacity 200ms ease}
+.admin-splash-static .splash-mark,.admin-splash-static .splash-name,.admin-splash-static .splash-subtitle{animation:none;opacity:1;transform:none}
+.admin-splash-static .splash-loader{animation:none;opacity:1}
+.admin-splash-static .splash-loader span{animation:none;width:100%}
 .splash-logo-wrap{position:relative;z-index:2;text-align:center;display:flex;flex-direction:column;align-items:center}
-.splash-mark{width:92px;height:92px;border:1px solid rgba(212,175,55,.55);border-radius:28px;background:linear-gradient(145deg,#171717,#090909);display:grid;place-items:center;position:relative;box-shadow:0 0 55px rgba(212,175,55,.16),inset 0 0 28px rgba(212,175,55,.06)}
+.splash-mark{width:92px;height:92px;border:1px solid rgba(212,175,55,.55);border-radius:28px;background:linear-gradient(145deg,#171717,#090909);display:grid;place-items:center;position:relative;box-shadow:0 0 55px rgba(212,175,55,.14),inset 0 0 28px rgba(212,175,55,.06);opacity:0;transform:scale(.94);animation:splashMarkIn 700ms cubic-bezier(.22,.7,.35,1) 80ms forwards}
 .splash-s{font-family:'Playfair Display',Georgia,serif;font-size:58px;line-height:1;color:#D4AF37;font-weight:600;transform:translateX(-2px)}
 .splash-star{position:absolute;right:12px;top:9px;color:#F4D67A;font-size:18px}
-.splash-name{font-family:'Playfair Display',Georgia,serif;font-size:34px;letter-spacing:.02em;margin-top:22px;color:#F7E8B1}
-.splash-subtitle{font-size:9px;letter-spacing:.32em;color:#8F8056;margin-top:7px}
-.splash-loader{width:100px;height:2px;background:#28200e;margin-top:28px;overflow:hidden;border-radius:99px}
-.splash-loader span{display:block;width:35%;height:100%;background:#D4AF37;animation:splashLoad 1.8s ease-in-out infinite}
-.splash-glow{position:absolute;border-radius:999px;filter:blur(70px);opacity:.12;background:#D4AF37}
+.splash-name{font-family:'Playfair Display',Georgia,serif;font-size:34px;letter-spacing:.02em;margin-top:22px;color:#F7E8B1;opacity:0;transform:translateY(6px);animation:splashFadeUp 650ms ease 340ms forwards}
+.splash-subtitle{font-size:9px;letter-spacing:.32em;color:#8F8056;margin-top:7px;opacity:0;animation:splashFade 600ms ease 560ms forwards}
+.splash-loader{width:100px;height:2px;background:#241d0c;margin-top:28px;overflow:hidden;border-radius:99px;opacity:0;animation:splashFade 500ms ease 680ms forwards}
+.splash-loader span{display:block;width:35%;height:100%;background:#D4AF37;animation:splashLoad 1.9s ease-in-out infinite}
+.splash-glow{position:absolute;border-radius:999px;filter:blur(80px);opacity:.1;background:#D4AF37}
 .splash-glow-one{width:280px;height:280px;top:12%;left:16%}
-.splash-glow-two{width:220px;height:220px;bottom:12%;right:18%;opacity:.08}
+.splash-glow-two{width:220px;height:220px;bottom:12%;right:18%;opacity:.07}
 @keyframes splashLoad{0%{transform:translateX(-120%)}100%{transform:translateX(420%)}}
+@keyframes splashMarkIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+@keyframes splashFadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes splashFade{from{opacity:0}to{opacity:1}}
 @media(max-width:800px){.splash-name{font-size:30px}.splash-mark{width:82px;height:82px}}
+@media (prefers-reduced-motion: reduce){
+  .splash-mark,.splash-name,.splash-subtitle,.splash-loader{animation:none!important;opacity:1!important;transform:none!important}
+  .splash-loader span{animation:none!important;width:100%!important}
+  .admin-splash{transition:opacity 200ms ease!important}
+}
