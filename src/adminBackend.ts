@@ -19,6 +19,7 @@ export async function getEcosystem(){
     safe(db('mentors?select=*&order=students_count.desc')),
     safe(db('growth_paths?select=*&order=created_at.asc')),
     safe(db('milestones?select=*&order=order_index.asc')),
+    safe(db('resources?select=*&limit=5000')),
     safe(db('user_progress?select=*&limit=5000')),
     safe(db('bookings?select=*&order=created_at.desc&limit=1000')),
     safe(db('conversations?select=id,student_id,mentor_id,created_at&limit=1000')),
@@ -29,7 +30,7 @@ export async function getEcosystem(){
     safe(db('session_types?select=*&order=created_at.desc&limit=1000')),
     safe(db('mentor_availability?select=*&order=start_at.asc&limit=1000')),
   ])
-  return{profiles,mentors,paths,milestones,progress,bookings,convos,reviews,feedback,goals,earnings,sessionTypes,availability,fetchedAt:Date.now()}
+  return{profiles,mentors,paths,milestones,resources,progress,bookings,convos,reviews,feedback,goals,earnings,sessionTypes,availability,fetchedAt:Date.now()}
 }
 
 // ── Name lookups so tables show people, not UUIDs ──
