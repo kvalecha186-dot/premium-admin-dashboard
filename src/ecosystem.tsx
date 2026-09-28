@@ -46,7 +46,7 @@ function build(d: any) {
     const en = d.progress.filter((r: any) => r.path_id === p.id)
     const avg = en.length ? Math.round(en.reduce((s: number, r: any) => s + num(r.overall_progress), 0) / en.length) : 0
     return {
-      ...p, ms, enrolled: en.length, avg,
+      ...p, ms, resources: d.resources.filter((x: any) => ms.some((m: any) => m.id === x.milestone_id)), enrolled: en.length, avg,
       done: en.filter((r: any) => num(r.overall_progress) >= 100).length,
       active: en.filter((r: any) => r.last_active_date && Date.parse(r.last_active_date) >= now - 7 * DAY).length,
       learners: en.map((r: any) => ({ name: nameOf(r.user_id), pct: Math.round(num(r.overall_progress)), streak: num(r.streak), xp: num(r.xp), last: r.last_active_date })).sort((a: any, b: any) => b.pct - a.pct),
@@ -248,9 +248,9 @@ function PathCard({ p }: { p: any }) {
     <div>
       <div style={{ fontFamily: 'Playfair Display,serif', fontSize: 23, fontWeight: 600 }}>{p.title}</div>
       <div style={{ fontSize: 13, color: muted, marginTop: 6, lineHeight: 1.55 }}>{p.description}</div>
-      <div style={{ fontSize: 12, color: dim, marginTop: 8 }}>{p.level} · {p.duration} · {p.ms.length} milestones</div>
+      <div style={{ fontSize: 12, color: dim, marginTop: 8 }}>{p.level} · {p.duration} · {p.ms.length} milestones · {p.resources.length} resources</div>
     </div>
-    <div style={{ ...grid(3, 10) }}>
+    <div style={{ ...grid(4, 10) }}>
       {[['Enrolled', enrolled], ['Active this week', p.active], ['Completed', p.done]].map(([l, v]) => <div key={String(l)} style={{ padding: '12px 14px', borderRadius: 12, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(212,175,55,.12)' }}>
         <div style={{ fontSize: 22, fontFamily: 'Playfair Display,serif', color: '#F4D67A' }}>{v}</div><div style={{ fontSize: 11, color: dim, marginTop: 2 }}>{l}</div>
       </div>)}
