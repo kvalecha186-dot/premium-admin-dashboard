@@ -61,12 +61,12 @@ const ADMIN_2FA: AdminTwoFA[] = [
 
 const eventTone = (event: LoginEvent['event']) => {
   switch (event) {
-    case 'Login Success': return { color: '#166534', bg: '#F0FDF4', icon: icons.check }
-    case 'Login Failed': return { color: '#B91C1C', bg: '#FEF2F2', icon: icons.x }
-    case 'New Device Detected': return { color: '#92400E', bg: '#FFFBEB', icon: icons.alert }
-    case '2FA Enabled': return { color: '#166534', bg: '#F0FDF4', icon: icons.shieldCheck }
-    case 'Password Changed': return { color: '#1D4ED8', bg: '#EFF6FF', icon: icons.edit }
-    default: return { color: '#737373', bg: '#FAF8F4', icon: icons.activity }
+    case 'Login Success': return { color: '#4ADE80', bg: 'rgba(74,222,128,0.12)', icon: icons.check }
+    case 'Login Failed': return { color: '#F87171', bg: 'rgba(248,113,113,0.12)', icon: icons.x }
+    case 'New Device Detected': return { color: '#FBBF24', bg: 'rgba(251,191,36,0.10)', icon: icons.alert }
+    case '2FA Enabled': return { color: '#4ADE80', bg: 'rgba(74,222,128,0.12)', icon: icons.shieldCheck }
+    case 'Password Changed': return { color: '#60A5FA', bg: 'rgba(96,165,250,0.12)', icon: icons.edit }
+    default: return { color: '#9AA0BA', bg: 'rgba(255,255,255,0.04)', icon: icons.activity }
   }
 }
 
@@ -99,7 +99,7 @@ export default function SecurityPage() {
           position: 'fixed',
           bottom: 28,
           right: 28,
-          background: '#171717',
+          background: '#0B1024',
           color: '#FFFFFF',
           padding: '12px 20px',
           borderRadius: 12,
@@ -112,7 +112,7 @@ export default function SecurityPage() {
           gap: 10,
           border: '1px solid rgba(200, 155, 31, 0.3)'
         }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#C89B1F' }} />
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#D4AF37' }} />
           {toastMessage}
         </div>
       )}
@@ -121,55 +121,55 @@ export default function SecurityPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
         <Card style={{ padding: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: '#F7F2E7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon d={icons.activity} size={16} style={{ color: '#C89B1F' }} />
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(212,175,55,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon d={icons.activity} size={16} style={{ color: '#D4AF37' }} />
             </div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#8A90AB', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Active Sessions
             </div>
           </div>
-          <div style={{ fontSize: 24, fontFamily: 'Playfair Display, serif', fontWeight: 600, color: '#171717' }}>{sessions.length}</div>
+          <div style={{ fontSize: 24, fontFamily: 'Playfair Display, serif', fontWeight: 600, color: '#F7EFD8' }}>{sessions.length}</div>
         </Card>
 
         <Card style={{ padding: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon d={icons.shieldCheck} size={16} style={{ color: '#166534' }} />
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(74,222,128,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon d={icons.shieldCheck} size={16} style={{ color: '#4ADE80' }} />
             </div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#8A90AB', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               2FA Coverage
             </div>
           </div>
-          <div style={{ fontSize: 24, fontFamily: 'Playfair Display, serif', fontWeight: 600, color: twoFACoveragePct === 100 ? '#166534' : '#171717' }}>
+          <div style={{ fontSize: 24, fontFamily: 'Playfair Display, serif', fontWeight: 600, color: twoFACoveragePct === 100 ? '#4ADE80' : '#F7EFD8' }}>
             {twoFACoveragePct}%
           </div>
         </Card>
 
         <Card style={{ padding: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon d={icons.alert} size={16} style={{ color: '#B91C1C' }} />
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(248,113,113,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon d={icons.alert} size={16} style={{ color: '#F87171' }} />
             </div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#8A90AB', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Failed Logins (7d)
             </div>
           </div>
-          <div style={{ fontSize: 24, fontFamily: 'Playfair Display, serif', fontWeight: 600, color: failedAttempts7d > 0 ? '#B91C1C' : '#171717' }}>
+          <div style={{ fontSize: 24, fontFamily: 'Playfair Display, serif', fontWeight: 600, color: failedAttempts7d > 0 ? '#F87171' : '#F7EFD8' }}>
             {failedAttempts7d}
           </div>
         </Card>
 
         <Card style={{ padding: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: '#F7F2E7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon d={icons.clock} size={16} style={{ color: '#C89B1F' }} />
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(212,175,55,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon d={icons.clock} size={16} style={{ color: '#D4AF37' }} />
             </div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#8E8E93', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#8A90AB', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
               Last Incident
             </div>
           </div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: '#171717', marginTop: 4 }}>6 days ago</div>
-          <div style={{ fontSize: 11, color: '#8E8E93', marginTop: 2 }}>Failed login · Kyiv, UA</div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: '#F7EFD8', marginTop: 4 }}>6 days ago</div>
+          <div style={{ fontSize: 11, color: '#8A90AB', marginTop: 2 }}>Failed login · Kyiv, UA</div>
         </Card>
       </div>
 
@@ -177,10 +177,10 @@ export default function SecurityPage() {
       <div style={{ marginBottom: 28 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div>
-            <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 600, color: '#171717' }}>
+            <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 600, color: '#F7EFD8' }}>
               Active Admin Sessions
             </div>
-            <div style={{ fontSize: 12.5, color: '#737373', marginTop: 2 }}>
+            <div style={{ fontSize: 12.5, color: '#9AA0BA', marginTop: 2 }}>
               Everyone currently signed in to the Starfix admin panel
             </div>
           </div>
@@ -189,9 +189,9 @@ export default function SecurityPage() {
         <Card style={{ padding: 0, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #ECE7DF', background: '#FAF8F4' }}>
+              <tr style={{ borderBottom: '1px solid rgba(212,175,55,0.18)', background: 'rgba(255,255,255,0.04)' }}>
                 {['Admin', 'Device', 'Location / IP', 'Signed In', 'Last Active', ''].map(h => (
-                  <th key={h} style={{ padding: '12px 20px', fontSize: 11, fontWeight: 600, color: '#8E8E93', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  <th key={h} style={{ padding: '12px 20px', fontSize: 11, fontWeight: 600, color: '#8A90AB', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     {h}
                   </th>
                 ))}
@@ -199,37 +199,37 @@ export default function SecurityPage() {
             </thead>
             <tbody>
               {sessions.map((s, i) => (
-                <tr key={s.email} style={{ borderBottom: i < sessions.length - 1 ? '1px solid #ECE7DF' : 'none' }}>
+                <tr key={s.email} style={{ borderBottom: i < sessions.length - 1 ? '1px solid rgba(212,175,55,0.18)' : 'none' }}>
                   <td style={{ padding: '14px 20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <img src={s.avatar} alt={s.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontSize: 13.5, fontWeight: 600, color: '#171717' }}>{s.name}</span>
+                          <span style={{ fontSize: 13.5, fontWeight: 600, color: '#F7EFD8' }}>{s.name}</span>
                           {s.current && (
-                            <span style={{ fontSize: 10, fontWeight: 600, color: '#C89B1F', background: '#F7F2E7', padding: '1px 7px', borderRadius: 99 }}>
+                            <span style={{ fontSize: 10, fontWeight: 600, color: '#D4AF37', background: 'rgba(212,175,55,0.14)', padding: '1px 7px', borderRadius: 99 }}>
                               This device
                             </span>
                           )}
                         </div>
-                        <div style={{ fontSize: 11.5, color: '#8E8E93' }}>{s.email}</div>
+                        <div style={{ fontSize: 11.5, color: '#8A90AB' }}>{s.email}</div>
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: '14px 20px', fontSize: 13, color: '#525252' }}>{s.device}</td>
+                  <td style={{ padding: '14px 20px', fontSize: 13, color: '#B8BCD0' }}>{s.device}</td>
                   <td style={{ padding: '14px 20px' }}>
-                    <div style={{ fontSize: 13, color: '#171717' }}>{s.location}</div>
-                    <div style={{ fontSize: 11, color: '#8E8E93' }}>{s.ip}</div>
+                    <div style={{ fontSize: 13, color: '#F7EFD8' }}>{s.location}</div>
+                    <div style={{ fontSize: 11, color: '#8A90AB' }}>{s.ip}</div>
                   </td>
-                  <td style={{ padding: '14px 20px', fontSize: 12.5, color: '#737373' }}>{s.startedAt}</td>
-                  <td style={{ padding: '14px 20px', fontSize: 12.5, color: '#171717', fontWeight: 500 }}>{s.lastActive}</td>
+                  <td style={{ padding: '14px 20px', fontSize: 12.5, color: '#9AA0BA' }}>{s.startedAt}</td>
+                  <td style={{ padding: '14px 20px', fontSize: 12.5, color: '#F7EFD8', fontWeight: 500 }}>{s.lastActive}</td>
                   <td style={{ padding: '14px 20px', textAlign: 'right' }}>
                     {!s.current && (
                       <button
                         onClick={() => revokeSession(s.email)}
                         style={{
-                          fontSize: 11.5, fontWeight: 600, color: '#B91C1C', background: '#FEF2F2',
-                          border: '1px solid #FCA5A5', padding: '6px 12px', borderRadius: 8, cursor: 'pointer'
+                          fontSize: 11.5, fontWeight: 600, color: '#F87171', background: 'rgba(248,113,113,0.12)',
+                          border: '1px solid rgba(248,113,113,0.45)', padding: '6px 12px', borderRadius: 8, cursor: 'pointer'
                         }}
                       >
                         Revoke
@@ -240,7 +240,7 @@ export default function SecurityPage() {
               ))}
               {sessions.length === 0 && (
                 <tr>
-                  <td colSpan={6} style={{ padding: '20px', textAlign: 'center', fontSize: 13, color: '#8E8E93' }}>
+                  <td colSpan={6} style={{ padding: '20px', textAlign: 'center', fontSize: 13, color: '#8A90AB' }}>
                     No active sessions
                   </td>
                 </tr>
@@ -253,10 +253,10 @@ export default function SecurityPage() {
       {/* Two-Factor Authentication Status */}
       <div style={{ marginBottom: 28 }}>
         <div style={{ marginBottom: 14 }}>
-          <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 600, color: '#171717' }}>
+          <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 600, color: '#F7EFD8' }}>
             Two-Factor Authentication Status
           </div>
-          <div style={{ fontSize: 12.5, color: '#737373', marginTop: 2 }}>
+          <div style={{ fontSize: 12.5, color: '#9AA0BA', marginTop: 2 }}>
             Per-admin 2FA enrollment · policy-level enforcement lives in Settings → Security
           </div>
         </div>
@@ -264,9 +264,9 @@ export default function SecurityPage() {
         <Card style={{ padding: 0, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #ECE7DF', background: '#FAF8F4' }}>
+              <tr style={{ borderBottom: '1px solid rgba(212,175,55,0.18)', background: 'rgba(255,255,255,0.04)' }}>
                 {['Admin', 'Role', 'Status'].map(h => (
-                  <th key={h} style={{ padding: '12px 20px', fontSize: 11, fontWeight: 600, color: '#8E8E93', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  <th key={h} style={{ padding: '12px 20px', fontSize: 11, fontWeight: 600, color: '#8A90AB', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     {h}
                   </th>
                 ))}
@@ -274,29 +274,29 @@ export default function SecurityPage() {
             </thead>
             <tbody>
               {ADMIN_2FA.map((a, i) => (
-                <tr key={a.email} style={{ borderBottom: i < ADMIN_2FA.length - 1 ? '1px solid #ECE7DF' : 'none' }}>
+                <tr key={a.email} style={{ borderBottom: i < ADMIN_2FA.length - 1 ? '1px solid rgba(212,175,55,0.18)' : 'none' }}>
                   <td style={{ padding: '14px 20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <img src={a.avatar} alt={a.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
                       <div>
-                        <div style={{ fontSize: 13.5, fontWeight: 600, color: '#171717' }}>{a.name}</div>
-                        <div style={{ fontSize: 11.5, color: '#8E8E93' }}>{a.email}</div>
+                        <div style={{ fontSize: 13.5, fontWeight: 600, color: '#F7EFD8' }}>{a.name}</div>
+                        <div style={{ fontSize: 11.5, color: '#8A90AB' }}>{a.email}</div>
                       </div>
                     </div>
                   </td>
                   <td style={{ padding: '14px 20px' }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: '#171717', background: '#FFFFFF', border: '1px solid #ECE7DF', padding: '3px 10px', borderRadius: 99 }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#F7EFD8', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(212,175,55,0.18)', padding: '3px 10px', borderRadius: 99 }}>
                       {a.role}
                     </span>
                   </td>
                   <td style={{ padding: '14px 20px' }}>
                     {a.twoFactorEnabled ? (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, color: '#166534', background: '#F0FDF4', padding: '4px 10px', borderRadius: 99 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, color: '#4ADE80', background: 'rgba(74,222,128,0.12)', padding: '4px 10px', borderRadius: 99 }}>
                         <Icon d={icons.shieldCheck} size={12} />
                         2FA Enabled
                       </span>
                     ) : (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, color: '#92400E', background: '#FFFBEB', padding: '4px 10px', borderRadius: 99 }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, color: '#FBBF24', background: 'rgba(251,191,36,0.10)', padding: '4px 10px', borderRadius: 99 }}>
                         <Icon d={icons.alert} size={12} />
                         Not Enabled
                       </span>
@@ -312,10 +312,10 @@ export default function SecurityPage() {
       {/* Recent Login Activity */}
       <div>
         <div style={{ marginBottom: 14 }}>
-          <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 600, color: '#171717' }}>
+          <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 600, color: '#F7EFD8' }}>
             Recent Login Activity
           </div>
-          <div style={{ fontSize: 12.5, color: '#737373', marginTop: 2 }}>
+          <div style={{ fontSize: 12.5, color: '#9AA0BA', marginTop: 2 }}>
             Successful logins, failed attempts, and account security events across all admins
           </div>
         </div>
@@ -323,9 +323,9 @@ export default function SecurityPage() {
         <Card style={{ padding: 0, overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #ECE7DF', background: '#FAF8F4' }}>
+              <tr style={{ borderBottom: '1px solid rgba(212,175,55,0.18)', background: 'rgba(255,255,255,0.04)' }}>
                 {['Admin', 'Event', 'Device', 'Location / IP', 'Time'].map(h => (
-                  <th key={h} style={{ padding: '12px 20px', fontSize: 11, fontWeight: 600, color: '#8E8E93', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                  <th key={h} style={{ padding: '12px 20px', fontSize: 11, fontWeight: 600, color: '#8A90AB', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
                     {h}
                   </th>
                 ))}
@@ -335,11 +335,11 @@ export default function SecurityPage() {
               {LOGIN_EVENTS.map((e, i) => {
                 const tone = eventTone(e.event)
                 return (
-                  <tr key={i} style={{ borderBottom: i < LOGIN_EVENTS.length - 1 ? '1px solid #ECE7DF' : 'none' }}>
+                  <tr key={i} style={{ borderBottom: i < LOGIN_EVENTS.length - 1 ? '1px solid rgba(212,175,55,0.18)' : 'none' }}>
                     <td style={{ padding: '14px 20px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <img src={e.avatar} alt={e.name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
-                        <span style={{ fontSize: 13, fontWeight: 600, color: '#171717' }}>{e.name}</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: '#F7EFD8' }}>{e.name}</span>
                       </div>
                     </td>
                     <td style={{ padding: '14px 20px' }}>
@@ -348,12 +348,12 @@ export default function SecurityPage() {
                         {e.event}
                       </span>
                     </td>
-                    <td style={{ padding: '14px 20px', color: '#525252' }}>{e.device}</td>
+                    <td style={{ padding: '14px 20px', color: '#B8BCD0' }}>{e.device}</td>
                     <td style={{ padding: '14px 20px' }}>
-                      <div style={{ color: '#171717' }}>{e.location}</div>
-                      <div style={{ fontSize: 11, color: '#8E8E93' }}>{e.ip}</div>
+                      <div style={{ color: '#F7EFD8' }}>{e.location}</div>
+                      <div style={{ fontSize: 11, color: '#8A90AB' }}>{e.ip}</div>
                     </td>
-                    <td style={{ padding: '14px 20px', color: '#737373', fontSize: 12.5 }}>{e.time}</td>
+                    <td style={{ padding: '14px 20px', color: '#9AA0BA', fontSize: 12.5 }}>{e.time}</td>
                   </tr>
                 )
               })}

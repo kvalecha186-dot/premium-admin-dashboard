@@ -58,27 +58,28 @@ export const icons = {
 }
 
 export function Card({ children, style = {}, className = '', onClick }: { children: React.ReactNode; style?: React.CSSProperties; className?: string; onClick?: (e: React.MouseEvent<HTMLDivElement>) => void }) {
+  const rest = '0 1px 0 rgba(255,255,255,0.05) inset, 0 18px 40px -26px rgba(0,0,0,0.9)'
   return (
     <div
       className={className}
       onClick={onClick}
       style={{
-        background: '#FFFFFF',
-        border: '1px solid #ECE7DF',
-        borderRadius: 14,
+        background: 'linear-gradient(160deg, rgba(22,32,72,0.78) 0%, rgba(10,15,36,0.88) 100%)',
+        border: '1px solid rgba(212,175,55,0.16)',
+        borderRadius: 16,
         padding: 24,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-        transition: 'transform 150ms ease, box-shadow 150ms ease',
+        boxShadow: rest,
+        transition: 'border-color 180ms ease, box-shadow 180ms ease',
         cursor: onClick ? 'pointer' : 'default',
         ...style
       }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)'
-        ;(e.currentTarget as HTMLElement).style.boxShadow = '0 10px 24px rgba(0,0,0,0.06)'
+        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(212,175,55,0.42)'
+        ;(e.currentTarget as HTMLElement).style.boxShadow = '0 1px 0 rgba(255,255,255,0.06) inset, 0 20px 46px -22px rgba(212,175,55,0.28)'
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
-        ;(e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.02)'
+        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(212,175,55,0.16)'
+        ;(e.currentTarget as HTMLElement).style.boxShadow = rest
       }}
     >
       {children}
@@ -88,13 +89,17 @@ export function Card({ children, style = {}, className = '', onClick }: { childr
 
 export function PageShell({ title, subtitle, action, children }: { title: string; subtitle: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div style={{ padding: '36px 40px', maxWidth: 1180, margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
+    <div className="sx-page" style={{ padding: '40px 44px 56px', maxWidth: 1220, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32, gap: 16 }}>
         <div>
-          <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 26, fontWeight: 600, color: '#171717', margin: 0, lineHeight: 1.25 }}>
+          <h1 style={{
+            fontFamily: 'Playfair Display, serif', fontSize: 36, fontWeight: 600, margin: 0, lineHeight: 1.15,
+            background: 'linear-gradient(100deg,#FFF3C4 0%,#F4D67A 30%,#D4AF37 65%,#B8901F 100%)',
+            WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+          }}>
             {title}
           </h1>
-          <p style={{ fontSize: 13.5, color: '#737373', margin: '6px 0 0', lineHeight: 1.5 }}>
+          <p style={{ fontSize: 14, color: '#9AA0BA', margin: '8px 0 0', lineHeight: 1.55, maxWidth: 640 }}>
             {subtitle}
           </p>
         </div>

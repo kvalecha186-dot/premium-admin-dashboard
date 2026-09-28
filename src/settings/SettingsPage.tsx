@@ -93,7 +93,7 @@ function FieldInput({
   return (
     <div style={{ position: 'relative' }}>
       {icon && (
-        <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#B8AF9E', display: 'flex' }}>
+        <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#7C8099', display: 'flex' }}>
           <Icon d={icons[icon]} size={15} />
         </span>
       )}
@@ -106,16 +106,16 @@ function FieldInput({
           width: '100%',
           padding: icon ? '11px 14px 11px 40px' : '11px 14px',
           borderRadius: 10,
-          border: '1px solid #ECE7DF',
-          background: '#FAF8F4',
+          border: '1px solid rgba(212,175,55,0.18)',
+          background: 'rgba(255,255,255,0.04)',
           fontSize: 13.5,
-          color: '#171717',
+          color: '#F7EFD8',
           outline: 'none',
           transition: 'border-color 150ms ease, background 150ms ease',
           fontFamily: 'Inter, sans-serif',
         }}
-        onFocus={e => { e.target.style.borderColor = '#C89B1F'; e.target.style.background = '#FFFFFF' }}
-        onBlur={e => { e.target.style.borderColor = '#ECE7DF'; e.target.style.background = '#FAF8F4' }}
+        onFocus={e => { e.target.style.borderColor = '#D4AF37'; e.target.style.background = 'rgba(255,255,255,0.06)' }}
+        onBlur={e => { e.target.style.borderColor = 'rgba(212,175,55,0.18)'; e.target.style.background = 'rgba(255,255,255,0.04)' }}
       />
     </div>
   )
@@ -124,8 +124,8 @@ function FieldInput({
 function FieldLabel({ children, hint }: { children: React.ReactNode; hint?: string }) {
   return (
     <div style={{ marginBottom: 8 }}>
-      <label style={{ fontSize: 12.5, fontWeight: 600, color: '#171717' }}>{children}</label>
-      {hint && <div style={{ fontSize: 11.5, color: '#8E8E93', marginTop: 1 }}>{hint}</div>}
+      <label style={{ fontSize: 12.5, fontWeight: 600, color: '#F7EFD8' }}>{children}</label>
+      {hint && <div style={{ fontSize: 11.5, color: '#8A90AB', marginTop: 1 }}>{hint}</div>}
     </div>
   )
 }
@@ -137,7 +137,7 @@ function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
       onClick={onClick}
       style={{
         width: 44, height: 24, borderRadius: 99, border: 'none', cursor: 'pointer', flexShrink: 0,
-        background: on ? '#C89B1F' : '#E5E5EA', position: 'relative', transition: 'background 200ms ease', padding: 2,
+        background: on ? '#D4AF37' : 'rgba(255,255,255,0.16)', position: 'relative', transition: 'background 200ms ease', padding: 2,
       }}
     >
       <div style={{
@@ -154,8 +154,8 @@ function Toggle({ on, onClick }: { on: boolean; onClick: () => void }) {
 function SectionHeading({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div style={{ marginBottom: 20 }}>
-      <div style={{ fontSize: 15, fontWeight: 600, color: '#171717' }}>{title}</div>
-      <div style={{ fontSize: 12.5, color: '#8E8E93', marginTop: 3 }}>{subtitle}</div>
+      <div style={{ fontSize: 15, fontWeight: 600, color: '#F7EFD8' }}>{title}</div>
+      <div style={{ fontSize: 12.5, color: '#8A90AB', marginTop: 3 }}>{subtitle}</div>
     </div>
   )
 }
@@ -211,12 +211,12 @@ export default function SettingsPage() {
       {/* Toast Notification */}
       {toastMessage && (
         <div style={{
-          position: 'fixed', bottom: 28, right: 28, background: '#171717', color: '#FFFFFF',
+          position: 'fixed', bottom: 28, right: 28, background: '#0B1024', color: '#FFFFFF',
           padding: '12px 20px', borderRadius: 12, fontSize: 13, fontWeight: 500,
           boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 100, display: 'flex', alignItems: 'center', gap: 10,
           border: '1px solid rgba(200, 155, 31, 0.3)',
         }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#C89B1F' }} />
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#D4AF37' }} />
           {toastMessage}
         </div>
       )}
@@ -230,7 +230,7 @@ export default function SettingsPage() {
         {/* ── LEFT: Tabs + working content ─────────────────────────────── */}
         <div>
           {/* Tabs */}
-          <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #ECE7DF', marginBottom: 24 }}>
+          <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid rgba(212,175,55,0.18)', marginBottom: 24 }}>
             {TABS.map(tab => {
               const isActive = activeTab === tab.id
               const isDirty = dirtyTabMap[tab.id]
@@ -241,15 +241,15 @@ export default function SettingsPage() {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 7,
                     padding: '10px 16px', border: 'none', background: 'transparent',
-                    color: isActive ? '#171717' : '#8E8E93', fontSize: 13.5,
+                    color: isActive ? '#F7EFD8' : '#8A90AB', fontSize: 13.5,
                     fontWeight: isActive ? 600 : 500, cursor: 'pointer',
-                    borderBottom: isActive ? '2px solid #C89B1F' : '2px solid transparent',
+                    borderBottom: isActive ? '2px solid #D4AF37' : '2px solid transparent',
                     marginBottom: -1, transition: 'color 150ms ease',
                   }}
                 >
-                  <Icon d={icons[tab.icon]} size={14} style={{ color: isActive ? '#C89B1F' : '#B8AF9E' }} />
+                  <Icon d={icons[tab.icon]} size={14} style={{ color: isActive ? '#D4AF37' : '#7C8099' }} />
                   {tab.label}
-                  {isDirty && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#C89B1F', display: 'inline-block' }} />}
+                  {isDirty && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#D4AF37', display: 'inline-block' }} />}
                 </button>
               )
             })}
@@ -282,25 +282,25 @@ export default function SettingsPage() {
                   this is an operationally sensitive control, so it shouldn't
                   look identical to a routine text field. */}
               <div style={{
-                borderRadius: 14, border: '1px solid #F3DFA3', background: '#FFFBEB',
+                borderRadius: 14, border: '1px solid rgba(212,175,55,0.35)', background: 'rgba(251,191,36,0.10)',
                 padding: 22, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
               }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F7E7B8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Icon d={icons.alert} size={17} style={{ color: '#92400E' }} />
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(212,175,55,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon d={icons.alert} size={17} style={{ color: '#FBBF24' }} />
                   </div>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: '#171717' }}>Maintenance Mode</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: '#F7EFD8' }}>Maintenance Mode</span>
                       <span style={{
                         fontSize: 10.5, fontWeight: 600, padding: '2px 8px', borderRadius: 99,
-                        color: general.maintenanceMode ? '#B91C1C' : '#166534',
-                        background: general.maintenanceMode ? '#FEE2E2' : '#DCFCE7',
+                        color: general.maintenanceMode ? '#F87171' : '#4ADE80',
+                        background: general.maintenanceMode ? 'rgba(248,113,113,0.16)' : 'rgba(74,222,128,0.16)',
                       }}>
                         {general.maintenanceMode ? 'Site Offline' : 'Site Is Live'}
                       </span>
                     </div>
-                    <div style={{ fontSize: 12, color: '#8A6D2F', marginTop: 3, maxWidth: 380 }}>
+                    <div style={{ fontSize: 12, color: '#E2C878', marginTop: 3, maxWidth: 380 }}>
                       Temporarily restrict public learner access to schedule core platform upgrades.
                     </div>
                   </div>
@@ -319,22 +319,22 @@ export default function SettingsPage() {
                   <div>
                     <FieldLabel>Primary Logo (SVG / PNG)</FieldLabel>
                     <div style={{
-                      border: '1.5px dashed #ECE7DF', borderRadius: 14, padding: '20px 22px',
-                      background: '#FAF8F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14,
+                      border: '1.5px dashed rgba(212,175,55,0.18)', borderRadius: 14, padding: '20px 22px',
+                      background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14,
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                        <div style={{ width: 38, height: 38, borderRadius: 10, background: '#171717', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <Icon d={icons.star} size={18} style={{ color: '#C89B1F' }} />
+                        <div style={{ width: 38, height: 38, borderRadius: 10, background: '#0B1024', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Icon d={icons.star} size={18} style={{ color: '#D4AF37' }} />
                         </div>
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: '#171717' }}>{branding.logoFileName}</div>
-                          <div style={{ fontSize: 11, color: '#8E8E93' }}>Recommended: 400×100px vector format</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#F7EFD8' }}>{branding.logoFileName}</div>
+                          <div style={{ fontSize: 11, color: '#8A90AB' }}>Recommended: 400×100px vector format</div>
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => setBranding({ ...branding, logoFileName: 'starfix-custom-logo-v2.svg' })}
-                        style={{ fontSize: 12, fontWeight: 600, color: '#171717', background: '#FFFFFF', border: '1px solid #ECE7DF', padding: '7px 14px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                        style={{ fontSize: 12, fontWeight: 600, color: '#F7EFD8', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(212,175,55,0.18)', padding: '7px 14px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }}
                       >
                         Choose New File
                       </button>
@@ -343,20 +343,20 @@ export default function SettingsPage() {
 
                   <div>
                     <FieldLabel>Browser Favicon (ICO / PNG 32×32)</FieldLabel>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderRadius: 14, background: '#FAF8F4', border: '1px solid #ECE7DF' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderRadius: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(212,175,55,0.18)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 8, background: '#171717', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Icon d={icons.star} size={14} style={{ color: '#C89B1F' }} />
+                        <div style={{ width: 32, height: 32, borderRadius: 8, background: '#0B1024', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Icon d={icons.star} size={14} style={{ color: '#D4AF37' }} />
                         </div>
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: '#171717' }}>{branding.faviconFileName}</div>
-                          <div style={{ fontSize: 11, color: '#8E8E93' }}>32×32px transparent PNG</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#F7EFD8' }}>{branding.faviconFileName}</div>
+                          <div style={{ fontSize: 11, color: '#8A90AB' }}>32×32px transparent PNG</div>
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => setBranding({ ...branding, faviconFileName: 'starfix-favicon-v2.png' })}
-                        style={{ fontSize: 12, fontWeight: 600, color: '#171717', background: '#FFFFFF', border: '1px solid #ECE7DF', padding: '7px 14px', borderRadius: 8, cursor: 'pointer' }}
+                        style={{ fontSize: 12, fontWeight: 600, color: '#F7EFD8', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(212,175,55,0.18)', padding: '7px 14px', borderRadius: 8, cursor: 'pointer' }}
                       >
                         Replace
                       </button>
@@ -368,24 +368,24 @@ export default function SettingsPage() {
               <Card>
                 <SectionHeading title="Live Preview" subtitle="How the mark renders across the learner site and this admin panel." />
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                  <div style={{ padding: 16, borderRadius: 12, border: '1px solid #ECE7DF', background: '#FAF8F4' }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#8E8E93', marginBottom: 10 }}>Navbar</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#FFFFFF', borderRadius: 10, border: '1px solid #ECE7DF' }}>
-                      <div style={{ width: 26, height: 26, borderRadius: 6, background: '#171717', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Icon d={icons.star} size={13} style={{ color: '#C89B1F' }} />
+                  <div style={{ padding: 16, borderRadius: 12, border: '1px solid rgba(212,175,55,0.18)', background: 'rgba(255,255,255,0.04)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#8A90AB', marginBottom: 10 }}>Navbar</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', borderRadius: 10, border: '1px solid rgba(212,175,55,0.18)' }}>
+                      <div style={{ width: 26, height: 26, borderRadius: 6, background: '#0B1024', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Icon d={icons.star} size={13} style={{ color: '#D4AF37' }} />
                       </div>
-                      <span style={{ fontFamily: 'Playfair Display, serif', fontWeight: 600, fontSize: 15, color: '#171717' }}>Starfix</span>
+                      <span style={{ fontFamily: 'Playfair Display, serif', fontWeight: 600, fontSize: 15, color: '#F7EFD8' }}>Starfix</span>
                     </div>
                   </div>
-                  <div style={{ padding: 16, borderRadius: 12, border: '1px solid #ECE7DF', background: '#FAF8F4' }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: '#8E8E93', marginBottom: 10 }}>Admin Sidebar</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#171717', borderRadius: 10 }}>
+                  <div style={{ padding: 16, borderRadius: 12, border: '1px solid rgba(212,175,55,0.18)', background: 'rgba(255,255,255,0.04)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#8A90AB', marginBottom: 10 }}>Admin Sidebar</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: '#0B1024', borderRadius: 10 }}>
                       <div style={{ width: 26, height: 26, borderRadius: 6, background: 'rgba(200, 155, 31, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Icon d={icons.star} size={13} style={{ color: '#C89B1F' }} />
+                        <Icon d={icons.star} size={13} style={{ color: '#D4AF37' }} />
                       </div>
                       <div>
                         <div style={{ fontFamily: 'Playfair Display, serif', fontWeight: 600, fontSize: 14, color: '#FFFFFF' }}>Starfix Admin</div>
-                        <div style={{ fontSize: 9.5, color: '#C89B1F' }}>Growth Operations</div>
+                        <div style={{ fontSize: 9.5, color: '#D4AF37' }}>Growth Operations</div>
                       </div>
                     </div>
                   </div>
@@ -401,20 +401,20 @@ export default function SettingsPage() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: '#171717' }}>Stripe Connect</span>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#166534', background: '#DCFCE7', padding: '2px 8px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#166534' }} />
+                      <span style={{ fontSize: 15, fontWeight: 600, color: '#F7EFD8' }}>Stripe Connect</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#4ADE80', background: 'rgba(74,222,128,0.16)', padding: '2px 8px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#4ADE80' }} />
                         Connected
                       </span>
                     </div>
-                    <div style={{ fontSize: 12, color: '#8E8E93', marginTop: 5 }}>
-                      Account ID: <code style={{ color: '#171717', fontWeight: 600 }}>acct_1N9xStarfixLive</code>
+                    <div style={{ fontSize: 12, color: '#8A90AB', marginTop: 5 }}>
+                      Account ID: <code style={{ color: '#F7EFD8', fontWeight: 600 }}>acct_1N9xStarfixLive</code>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => showToast('Redirecting to Stripe Express Dashboard…')}
-                    style={{ fontSize: 12, fontWeight: 600, color: '#171717', background: '#FFFFFF', border: '1px solid #ECE7DF', padding: '8px 16px', borderRadius: 10, cursor: 'pointer' }}
+                    style={{ fontSize: 12, fontWeight: 600, color: '#F7EFD8', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(212,175,55,0.18)', padding: '8px 16px', borderRadius: 10, cursor: 'pointer' }}
                   >
                     Manage Account
                   </button>
@@ -429,7 +429,7 @@ export default function SettingsPage() {
                     <select
                       value={payments.payoutSchedule}
                       onChange={e => setPayments({ ...payments, payoutSchedule: e.target.value })}
-                      style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid #ECE7DF', background: '#FAF8F4', fontSize: 13.5, color: '#171717', outline: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+                      style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid rgba(212,175,55,0.18)', background: 'rgba(255,255,255,0.04)', fontSize: 13.5, color: '#F7EFD8', outline: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
                     >
                       <option value="Weekly (Every Monday)">Weekly (Every Monday)</option>
                       <option value="Bi-weekly (1st & 15th)">Bi-weekly (1st &amp; 15th)</option>
@@ -441,8 +441,8 @@ export default function SettingsPage() {
                     <FieldInput icon="dollar" type="number" value={payments.commissionPct} onChange={v => setPayments({ ...payments, commissionPct: Number(v) })} />
                   </div>
                 </div>
-                <div style={{ fontSize: 12, color: '#8E8E93', marginTop: 12 }}>
-                  Starfix receives <strong style={{ color: '#171717' }}>{payments.commissionPct}%</strong>, mentors receive <strong style={{ color: '#171717' }}>{100 - payments.commissionPct}%</strong> of every session fee.
+                <div style={{ fontSize: 12, color: '#8A90AB', marginTop: 12 }}>
+                  Starfix receives <strong style={{ color: '#F7EFD8' }}>{payments.commissionPct}%</strong>, mentors receive <strong style={{ color: '#F7EFD8' }}>{100 - payments.commissionPct}%</strong> of every session fee.
                 </div>
               </Card>
 
@@ -450,12 +450,12 @@ export default function SettingsPage() {
                 <SectionHeading title="Subscription Plans" subtitle="Current pricing tiers — read-only summary." />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {SUBSCRIPTION_PLANS.map(plan => (
-                    <div key={plan.name} style={{ padding: '13px 16px', borderRadius: 12, border: '1px solid #ECE7DF', background: '#FAF8F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div key={plan.name} style={{ padding: '13px 16px', borderRadius: 12, border: '1px solid rgba(212,175,55,0.18)', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#171717' }}>{plan.name}</div>
-                        <div style={{ fontSize: 11.5, color: '#8E8E93', marginTop: 2 }}>{plan.features}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#F7EFD8' }}>{plan.name}</div>
+                        <div style={{ fontSize: 11.5, color: '#8A90AB', marginTop: 2 }}>{plan.features}</div>
                       </div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#C89B1F', whiteSpace: 'nowrap' }}>{plan.price}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#D4AF37', whiteSpace: 'nowrap' }}>{plan.price}</div>
                     </div>
                   ))}
                 </div>
@@ -469,18 +469,18 @@ export default function SettingsPage() {
               <Card>
                 <SectionHeading title="Authentication Policy" subtitle="Sign-in requirements enforced across every admin account." />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderRadius: 12, background: '#FAF8F4', border: '1px solid #ECE7DF' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(212,175,55,0.18)' }}>
                     <div>
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: '#171717' }}>Two-Factor Authentication</div>
-                      <div style={{ fontSize: 12, color: '#8E8E93', marginTop: 2 }}>Require a TOTP authenticator app for every admin login.</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: '#F7EFD8' }}>Two-Factor Authentication</div>
+                      <div style={{ fontSize: 12, color: '#8A90AB', marginTop: 2 }}>Require a TOTP authenticator app for every admin login.</div>
                     </div>
                     <Toggle on={security.twoFactorEnabled} onClick={() => setSecurity({ ...security, twoFactorEnabled: !security.twoFactorEnabled })} />
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderRadius: 12, background: '#FAF8F4', border: '1px solid #ECE7DF' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(212,175,55,0.18)' }}>
                     <div>
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: '#171717' }}>New Device &amp; IP Alerts</div>
-                      <div style={{ fontSize: 12, color: '#8E8E93', marginTop: 2 }}>Email the admin immediately on an unrecognized login.</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: '#F7EFD8' }}>New Device &amp; IP Alerts</div>
+                      <div style={{ fontSize: 12, color: '#8A90AB', marginTop: 2 }}>Email the admin immediately on an unrecognized login.</div>
                     </div>
                     <Toggle on={security.loginAlertsEnabled} onClick={() => setSecurity({ ...security, loginAlertsEnabled: !security.loginAlertsEnabled })} />
                   </div>
@@ -490,7 +490,7 @@ export default function SettingsPage() {
                     <select
                       value={security.sessionTimeout}
                       onChange={e => setSecurity({ ...security, sessionTimeout: e.target.value })}
-                      style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid #ECE7DF', background: '#FAF8F4', fontSize: 13.5, color: '#171717', outline: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+                      style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: '1px solid rgba(212,175,55,0.18)', background: 'rgba(255,255,255,0.04)', fontSize: 13.5, color: '#F7EFD8', outline: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
                     >
                       <option value="15 minutes">15 minutes</option>
                       <option value="30 minutes">30 minutes</option>
@@ -507,22 +507,22 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => showToast('Invite modal triggered')}
-                    style={{ fontSize: 12, fontWeight: 600, color: '#C89B1F', background: '#F7F2E7', border: 'none', padding: '7px 14px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', marginTop: -20 }}
+                    style={{ fontSize: 12, fontWeight: 600, color: '#D4AF37', background: 'rgba(212,175,55,0.14)', border: 'none', padding: '7px 14px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', marginTop: -20 }}
                   >
                     + Invite Admin
                   </button>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {ADMIN_ROLES.map(adm => (
-                    <div key={adm.email} style={{ padding: '11px 14px', borderRadius: 12, border: '1px solid #ECE7DF', background: '#FAF8F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div key={adm.email} style={{ padding: '11px 14px', borderRadius: 12, border: '1px solid rgba(212,175,55,0.18)', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <img src={adm.avatar} alt={adm.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: '#171717' }}>{adm.name}</div>
-                          <div style={{ fontSize: 11, color: '#8E8E93' }}>{adm.email}</div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#F7EFD8' }}>{adm.name}</div>
+                          <div style={{ fontSize: 11, color: '#8A90AB' }}>{adm.email}</div>
                         </div>
                       </div>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#171717', background: '#FFFFFF', border: '1px solid #ECE7DF', padding: '3px 10px', borderRadius: 99 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#F7EFD8', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(212,175,55,0.18)', padding: '3px 10px', borderRadius: 99 }}>
                         {adm.role}
                       </span>
                     </div>
@@ -533,10 +533,10 @@ export default function SettingsPage() {
               <a
                 href="#security"
                 onClick={e => e.preventDefault()}
-                style={{ fontSize: 12.5, color: '#8E8E93', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
+                style={{ fontSize: 12.5, color: '#8A90AB', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}
               >
                 <Icon d={icons.eye} size={13} />
-                Looking for active sessions and login history? See the <span style={{ color: '#C89B1F', fontWeight: 600 }}>Security</span> page.
+                Looking for active sessions and login history? See the <span style={{ color: '#D4AF37', fontWeight: 600 }}>Security</span> page.
               </a>
             </div>
           )}
@@ -544,11 +544,11 @@ export default function SettingsPage() {
           {/* Save Action Footer — appears only when the current tab has unsaved changes */}
           {isCurrentTabDirty && (
             <div style={{
-              marginTop: 20, padding: '16px 20px', borderRadius: 14, background: '#171717',
+              marginTop: 20, padding: '16px 20px', borderRadius: 14, background: '#0B1024',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#D4D4D4' }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#C89B1F' }} />
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#D4AF37' }} />
                 Unsaved changes in {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
               </div>
               <button
@@ -556,7 +556,7 @@ export default function SettingsPage() {
                 onClick={handleSave}
                 disabled={isSaving}
                 style={{
-                  background: '#C89B1F', color: '#171717', padding: '10px 20px', borderRadius: 10,
+                  background: 'linear-gradient(135deg,#F4D67A,#D4AF37)', color: '#0A0E1F', padding: '10px 20px', borderRadius: 10,
                   fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', opacity: isSaving ? 0.7 : 1,
                 }}
               >
@@ -567,57 +567,57 @@ export default function SettingsPage() {
         </div>
 
         {/* ── RIGHT: Context rail — persistent across every tab ────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, position: 'sticky', top: 24 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, position: 'sticky', top: 96 }}>
 
           <Card style={{ padding: 20 }}>
-            <div style={{ fontSize: 11.5, fontWeight: 600, color: '#8E8E93', marginBottom: 14 }}>Environment</div>
+            <div style={{ fontSize: 11.5, fontWeight: 600, color: '#8A90AB', marginBottom: 14 }}>Environment</div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 12.5, color: '#525252' }}>Environment</span>
-                <span style={{ fontSize: 11.5, fontWeight: 600, color: '#166534', display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#166534' }} />
+                <span style={{ fontSize: 12.5, color: '#B8BCD0' }}>Environment</span>
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: '#4ADE80', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80' }} />
                   Production
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 12.5, color: '#525252' }}>Public site</span>
+                <span style={{ fontSize: 12.5, color: '#B8BCD0' }}>Public site</span>
                 <span style={{
                   fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 99,
-                  color: general.maintenanceMode ? '#B91C1C' : '#166534',
-                  background: general.maintenanceMode ? '#FEE2E2' : '#DCFCE7',
+                  color: general.maintenanceMode ? '#F87171' : '#4ADE80',
+                  background: general.maintenanceMode ? 'rgba(248,113,113,0.16)' : 'rgba(74,222,128,0.16)',
                 }}>
                   {general.maintenanceMode ? 'Offline' : 'Live'}
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 12.5, color: '#525252' }}>Last saved</span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: '#171717' }}>{lastSavedLabel}</span>
+                <span style={{ fontSize: 12.5, color: '#B8BCD0' }}>Last saved</span>
+                <span style={{ fontSize: 12, fontWeight: 500, color: '#F7EFD8' }}>{lastSavedLabel}</span>
               </div>
             </div>
 
-            <div style={{ height: 1, background: '#ECE7DF', margin: '16px 0' }} />
+            <div style={{ height: 1, background: 'rgba(212,175,55,0.18)', margin: '16px 0' }} />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=faces" alt="Marcus Webb" style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover' }} />
               <div>
-                <div style={{ fontSize: 12.5, fontWeight: 600, color: '#171717' }}>Marcus Webb</div>
-                <div style={{ fontSize: 11, color: '#8E8E93' }}>Signed in · Head of Platform</div>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: '#F7EFD8' }}>Marcus Webb</div>
+                <div style={{ fontSize: 11, color: '#8A90AB' }}>Signed in · Head of Platform</div>
               </div>
             </div>
           </Card>
 
           <Card style={{ padding: 20 }}>
-            <div style={{ fontSize: 11.5, fontWeight: 600, color: '#8E8E93', marginBottom: 14 }}>Recent Changes</div>
+            <div style={{ fontSize: 11.5, fontWeight: 600, color: '#8A90AB', marginBottom: 14 }}>Recent Changes</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {RECENT_CHANGES.map((c, i) => (
                 <div key={i} style={{ display: 'flex', gap: 10 }}>
-                  <div style={{ width: 26, height: 26, borderRadius: 8, background: '#F7F2E7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Icon d={icons[c.icon]} size={13} style={{ color: '#C89B1F' }} />
+                  <div style={{ width: 26, height: 26, borderRadius: 8, background: 'rgba(212,175,55,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon d={icons[c.icon]} size={13} style={{ color: '#D4AF37' }} />
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 12, color: '#171717', lineHeight: 1.4 }}>{c.label}</div>
-                    <div style={{ fontSize: 11, color: '#8E8E93', marginTop: 2 }}>{c.admin} · {c.time}</div>
+                    <div style={{ fontSize: 12, color: '#F7EFD8', lineHeight: 1.4 }}>{c.label}</div>
+                    <div style={{ fontSize: 11, color: '#8A90AB', marginTop: 2 }}>{c.admin} · {c.time}</div>
                   </div>
                 </div>
               ))}

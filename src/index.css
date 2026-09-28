@@ -19,9 +19,10 @@
 }
 
 body {
-  background-color: #FAF9F6;
+  background-color: #05070F;
+  color-scheme: dark;
   font-family: 'Inter', system-ui, sans-serif;
-  color: #111111;
+  color: #F7EFD8;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -34,7 +35,7 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #ECE7DC;
+  background: rgba(212,175,55,0.25);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
@@ -70,7 +71,7 @@ body {
 }
 
 
-.admin-splash{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%,#181206 0%,#0b0a09 42%,#080808 100%);color:#fff;overflow:hidden;opacity:1;transition:opacity 600ms ease}
+.admin-splash{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%,#0E1533 0%,#070A1A 45%,#04050D 100%);color:#fff;overflow:hidden;opacity:1;transition:opacity 600ms ease}
 .admin-splash-exit{opacity:0;pointer-events:none}
 .admin-splash-static{transition:opacity 200ms ease}
 .admin-splash-static .splash-mark,.admin-splash-static .splash-name,.admin-splash-static .splash-subtitle{animation:none;opacity:1;transform:none}
@@ -97,3 +98,20 @@ body {
   .splash-loader span{animation:none!important;width:100%!important}
   .admin-splash{transition:opacity 200ms ease!important}
 }
+
+
+/* ── Starfix navy & gold theme ─────────────────────────────────────────── */
+.sx-app select option{background:#0B1024;color:#F7EFD8}
+.sx-main input,.sx-main select{background:rgba(255,255,255,.05);color:#F7EFD8;font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s}
+.sx-main input::placeholder{color:#7C8099}
+.sx-main input:focus,.sx-main select:focus{border-color:#D4AF37!important;box-shadow:0 0 0 3px rgba(212,175,55,.15)}
+.sx-main tbody tr{transition:background .15s}
+.sx-main tbody tr:hover{background:rgba(212,175,55,.055)}
+.sx-main button{transition:border-color .15s,background .15s,color .15s}
+.sx-main button:hover{border-color:rgba(212,175,55,.55)}
+.sx-nav{transition:background .15s,color .15s}
+.sx-nav:hover{background:rgba(212,175,55,.09)!important;color:#F4D67A!important}
+:focus-visible{outline:2px solid #D4AF37;outline-offset:2px}
+@keyframes sxRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.sx-page{animation:sxRise .5s ease both}
+@media (prefers-reduced-motion:reduce){.sx-page{animation:none}}
