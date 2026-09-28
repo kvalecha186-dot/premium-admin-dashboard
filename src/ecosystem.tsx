@@ -251,7 +251,7 @@ function PathCard({ p }: { p: any }) {
       <div style={{ fontSize: 12, color: dim, marginTop: 8 }}>{p.level} · {p.duration} · {p.ms.length} milestones · {p.resources.length} resources</div>
     </div>
     <div style={{ ...grid(4, 10) }}>
-      {[['Enrolled', enrolled], ['Active this week', p.active], ['Completed', p.done]].map(([l, v]) => <div key={String(l)} style={{ padding: '12px 14px', borderRadius: 12, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(212,175,55,.12)' }}>
+      {[['Enrolled', enrolled], ['Active this week', p.active], ['Completed', p.done], ['Resources', p.resources.length]].map(([l, v]) => <div key={String(l)} style={{ padding: '12px 14px', borderRadius: 12, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(212,175,55,.12)' }}>
         <div style={{ fontSize: 22, fontFamily: 'Playfair Display,serif', color: '#F4D67A' }}>{v}</div><div style={{ fontSize: 11, color: dim, marginTop: 2 }}>{l}</div>
       </div>)}
     </div>
