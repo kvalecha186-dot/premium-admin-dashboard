@@ -115,3 +115,58 @@ body {
 @keyframes sxRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .sx-page{animation:sxRise .5s ease both}
 @media (prefers-reduced-motion:reduce){.sx-page{animation:none}}
+
+
+/* ── Mobile / tablet layout (≤ 860px). Desktop styles above are untouched. ── */
+.sx-burger{display:none}
+.sx-backdrop{display:none}
+@media (max-width:860px){
+  html,body{overflow-x:hidden}
+
+  /* Sidebar becomes a slide-out drawer */
+  .sx-aside{position:fixed!important;top:0;left:0;bottom:0;height:100vh!important;height:100dvh!important;z-index:60;transform:translateX(-105%);transition:transform .25s ease;width:272px!important;max-width:86vw}
+  .sx-aside.sx-open{transform:none;box-shadow:0 0 70px rgba(0,0,0,.75)}
+  .sx-backdrop{display:block;position:fixed;inset:0;z-index:55;background:rgba(2,4,12,.62);backdrop-filter:blur(2px)}
+  .sx-burger{display:grid;place-items:center;width:38px;height:38px;flex-shrink:0;border-radius:10px;border:1px solid rgba(212,175,55,.32);background:rgba(255,255,255,.05);color:#F4D67A;font-size:18px;line-height:1;cursor:pointer}
+
+  /* Compact top bar */
+  .sx-header{height:60px!important;padding:0 12px!important}
+  .sx-welcome{font-size:15px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sx-date,.sx-const{display:none!important}
+  .sx-hright{gap:8px!important}
+  .sx-hright button{padding:7px 10px!important;font-size:12px!important}
+
+  /* Page spacing + headings */
+  .sx-main{overflow-x:hidden}
+  .sx-page{padding:20px 14px 44px!important}
+  .sx-page h1{font-size:26px!important}
+  .sx-page>div:first-child{flex-direction:column!important;align-items:stretch!important;margin-bottom:20px!important}
+  .sx-page>div:first-child>div:last-child:not(:first-child){margin-top:0!important}
+
+  /* Grids collapse: 1 column by default, KPI grids 2 columns, small stat boxes stay 3 */
+  .sx-main [style*="grid-template-columns"]{grid-template-columns:minmax(0,1fr)!important}
+  .sx-main [style*="repeat(4"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .sx-main [style*="repeat(3"]{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .sx-main [style*="110px"]{grid-template-columns:96px minmax(0,1fr)!important}
+
+  /* Tighter cards and KPI numbers */
+  .sx-main [style*="border-radius: 16px"]:not([style*="padding: 0"]){padding:16px!important}
+  .sx-main [style*="font-size: 38px"]{font-size:28px!important}
+
+  /* Controls fill the width */
+  .sx-main input,.sx-main select{width:100%!important;max-width:100%!important}
+
+  /* Tables scroll sideways inside their card instead of squashing */
+  .sx-main table{min-width:640px}
+
+  /* Rows with fixed-width columns wrap instead of overflowing */
+  .sx-main div:has(>[style*="width: 150px"]),.sx-main div:has(>[style*="width: 170px"]){flex-wrap:wrap!important;row-gap:8px}
+  .sx-main [style*="width: 150px"]{width:100%!important;order:5}
+  .sx-main [style*="width: 170px"]{width:auto!important;flex:1 1 120px;min-width:0}
+  .sx-main div:has(>[style*="width: 170px"])>div:nth-child(3){flex:1 1 100%!important;order:9}
+}
+
+@media (max-width:420px){
+  .sx-page h1{font-size:23px!important}
+  .sx-main [style*="font-size: 38px"]{font-size:25px!important}
+}

@@ -1,366 +1,124 @@
-import React, { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Icon, icons, Card, PageShell } from '../shared'
+import { authRequest, db, signOutAdmin } from '../lib/supabase'
 
-// ── Security & Access — admin login history, active sessions, 2FA coverage ──
-// Read-mostly visibility page. Policy toggles (2FA requirement, session
-// timeout, admin invites) remain in Settings → Security; this page is the
-// operational view: who is logged in right now, who logged in recently, and
-// which admins still don't have 2FA enabled.
+// ── Security & Access — real data from your Supabase auth session and admin profiles ──
+const muted = '#9AA0BA', dim = '#8A90AB'
 
-interface ActiveSession {
-  name: string
-  email: string
-  avatar: string
-  device: string
-  location: string
-  ip: string
-  startedAt: string
-  lastActive: string
-  current?: boolean
+const browser = () => {
+  const ua = navigator.userAgent
+  const b = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser'
+  const os = /Windows/.test(ua) ? 'Windows' : /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : /Mac OS/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : 'Unknown OS'
+  return b + ' · ' + os
 }
-
-interface LoginEvent {
-  name: string
-  avatar: string
-  event: 'Login Success' | 'Login Failed' | 'Password Changed' | '2FA Enabled' | 'New Device Detected'
-  ip: string
-  location: string
-  device: string
-  time: string
+const when = (v?: string | number | null) => {
+  if (!v) return '—'
+  const d = typeof v === 'number' ? new Date(v * 1000) : new Date(v)
+  return isNaN(d.getTime()) ? '—' : d.toLocaleString()
 }
+const sessionExpiry = () => { try { return JSON.parse(localStorage.getItem('starfix_admin_access') || 'null')?.expires_at as number | undefined } catch { return undefined } }
 
-interface AdminTwoFA {
-  name: string
-  email: string
-  avatar: string
-  role: string
-  twoFactorEnabled: boolean
-}
+const btn: React.CSSProperties = { padding: '9px 16px', border: '1px solid rgba(212,175,55,.3)', borderRadius: 9, background: 'rgba(255,255,255,.05)', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: '#F7EFD8' }
 
-const ACTIVE_SESSIONS: ActiveSession[] = [
-  { name: 'Marcus Webb', email: 'marcus@starfix.com', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=faces', device: 'Chrome · macOS', location: 'Ludhiana, IN', ip: '103.21.244.18', startedAt: 'Today, 9:02 AM', lastActive: 'Just now', current: true },
-  { name: 'Elena Rostova', email: 'elena@starfix.com', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=faces', device: 'Safari · iOS', location: 'Mumbai, IN', ip: '49.36.88.201', startedAt: 'Today, 8:14 AM', lastActive: '6 minutes ago' },
-  { name: 'David Miller', email: 'david@starfix.com', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=faces', device: 'Edge · Windows', location: 'Singapore, SG', ip: '175.41.9.63', startedAt: 'Yesterday, 6:47 PM', lastActive: '3 hours ago' },
-]
-
-const LOGIN_EVENTS: LoginEvent[] = [
-  { name: 'Marcus Webb', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=faces', event: 'Login Success', ip: '103.21.244.18', location: 'Ludhiana, IN', device: 'Chrome · macOS', time: 'Today, 9:02 AM' },
-  { name: 'Elena Rostova', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=faces', event: 'Login Success', ip: '49.36.88.201', location: 'Mumbai, IN', device: 'Safari · iOS', time: 'Today, 8:14 AM' },
-  { name: 'Unknown', avatar: 'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=80&h=80&fit=crop&crop=faces', event: 'Login Failed', ip: '188.114.97.3', location: 'Lagos, NG', device: 'Firefox · Linux', time: 'Today, 4:51 AM' },
-  { name: 'David Miller', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=faces', event: 'New Device Detected', ip: '175.41.9.63', location: 'Singapore, SG', device: 'Edge · Windows', time: 'Yesterday, 6:47 PM' },
-  { name: 'David Miller', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=faces', event: '2FA Enabled', ip: '175.41.9.63', location: 'Singapore, SG', device: 'Edge · Windows', time: '2 days ago' },
-  { name: 'Marcus Webb', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=faces', event: 'Password Changed', ip: '103.21.244.18', location: 'Ludhiana, IN', device: 'Chrome · macOS', time: '5 days ago' },
-  { name: 'Unknown', avatar: 'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=80&h=80&fit=crop&crop=faces', event: 'Login Failed', ip: '91.203.5.44', location: 'Kyiv, UA', device: 'Chrome · Windows', time: '6 days ago' },
-]
-
-const ADMIN_2FA: AdminTwoFA[] = [
-  { name: 'Marcus Webb', email: 'marcus@starfix.com', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=faces', role: 'Owner', twoFactorEnabled: true },
-  { name: 'Elena Rostova', email: 'elena@starfix.com', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=faces', role: 'Admin', twoFactorEnabled: true },
-  { name: 'David Miller', email: 'david@starfix.com', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=faces', role: 'Billing Admin', twoFactorEnabled: false },
-]
-
-const eventTone = (event: LoginEvent['event']) => {
-  switch (event) {
-    case 'Login Success': return { color: '#4ADE80', bg: 'rgba(74,222,128,0.12)', icon: icons.check }
-    case 'Login Failed': return { color: '#F87171', bg: 'rgba(248,113,113,0.12)', icon: icons.x }
-    case 'New Device Detected': return { color: '#FBBF24', bg: 'rgba(251,191,36,0.10)', icon: icons.alert }
-    case '2FA Enabled': return { color: '#4ADE80', bg: 'rgba(74,222,128,0.12)', icon: icons.shieldCheck }
-    case 'Password Changed': return { color: '#60A5FA', bg: 'rgba(96,165,250,0.12)', icon: icons.edit }
-    default: return { color: '#9AA0BA', bg: 'rgba(255,255,255,0.04)', icon: icons.activity }
-  }
+function Kpi({ icon, label, value, sub, tone }: { icon: keyof typeof icons; label: string; value: string; sub?: string; tone?: string }) {
+  return <Card style={{ padding: 20 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+      <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(212,175,55,.14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon d={icons[icon]} size={16} style={{ color: '#D4AF37' }} />
+      </div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: dim }}>{label}</div>
+    </div>
+    <div style={{ fontSize: 20, fontFamily: 'Playfair Display, serif', fontWeight: 600, color: tone || '#F7EFD8', wordBreak: 'break-word' }}>{value}</div>
+    {sub && <div style={{ fontSize: 11.5, color: dim, marginTop: 4 }}>{sub}</div>}
+  </Card>
 }
 
 export default function SecurityPage() {
-  const [sessions, setSessions] = useState(ACTIVE_SESSIONS)
-  const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const [u, setU] = useState<any>(null)
+  const [admins, setAdmins] = useState<any[]>([])
+  const [err, setErr] = useState('')
+  const [working, setWorking] = useState(false)
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg)
-    setTimeout(() => setToastMessage(null), 3000)
+  useEffect(() => {
+    authRequest('/auth/v1/user').then(r => r.json()).then(setU).catch(e => setErr(e.message))
+    db('profiles?select=id,full_name,email,role,created_at&role=eq.admin&order=created_at.asc').then(setAdmins).catch(() => {})
+  }, [])
+
+  const factors: any[] = u?.factors || []
+  const mfaOn = factors.some(f => f.status === 'verified')
+  const exp = sessionExpiry()
+
+  const signOutEverywhere = async () => {
+    if (!window.confirm('Sign out of Starfix Admin on every device?')) return
+    setWorking(true)
+    try { await authRequest('/auth/v1/logout?scope=global', { method: 'POST' }) } catch { /* token may already be invalid */ }
+    await signOutAdmin()
+    location.reload()
   }
 
-  const revokeSession = (email: string) => {
-    setSessions(prev => prev.filter(s => s.email !== email))
-    showToast(`Session revoked for ${email}`)
-  }
+  const rows: [string, string][] = [
+    ['Signed in as', u?.email || '—'],
+    ['User ID', u?.id || '—'],
+    ['Sign-in method', (u?.app_metadata?.provider || 'email') + ''],
+    ['Email confirmed', when(u?.email_confirmed_at)],
+    ['Account created', when(u?.created_at)],
+    ['Last sign-in', when(u?.last_sign_in_at)],
+    ['Session expires', when(exp)],
+    ['This device', browser()],
+  ]
 
-  const twoFAEnabledCount = ADMIN_2FA.filter(a => a.twoFactorEnabled).length
-  const twoFACoveragePct = Math.round((twoFAEnabledCount / ADMIN_2FA.length) * 100)
-  const failedAttempts7d = LOGIN_EVENTS.filter(e => e.event === 'Login Failed').length
+  return <PageShell title="Security & Access" subtitle="Your live admin session, the people who can sign in to this panel, and two-factor status — read directly from Starfix authentication.">
+    {err && <Card style={{ marginBottom: 16, color: '#F87171' }}>{err}</Card>}
 
-  return (
-    <PageShell
-      title="Security & Access"
-      subtitle="Live visibility into admin sessions, login activity, and two-factor authentication coverage across Starfix Operations."
-    >
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div style={{
-          position: 'fixed',
-          bottom: 28,
-          right: 28,
-          background: '#0B1024',
-          color: '#FFFFFF',
-          padding: '12px 20px',
-          borderRadius: 12,
-          fontSize: 13,
-          fontWeight: 500,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-          zIndex: 100,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          border: '1px solid rgba(200, 155, 31, 0.3)'
-        }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#D4AF37' }} />
-          {toastMessage}
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: 16, marginBottom: 28 }}>
+      <Kpi icon="users" label="Administrators" value={String(admins.length)} sub="Accounts with admin access" />
+      <Kpi icon="shieldCheck" label="Two-factor (you)" value={u ? (mfaOn ? 'Enabled' : 'Not enabled') : '…'} tone={u ? (mfaOn ? '#4ADE80' : '#FBBF24') : undefined} sub={mfaOn ? 'Authenticator app verified' : 'Add an authenticator app in Supabase'} />
+      <Kpi icon="clock" label="Last sign-in" value={u?.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString() : '—'} sub={u?.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleTimeString() : undefined} />
+      <Kpi icon="activity" label="Session expires" value={exp ? new Date(exp * 1000).toLocaleTimeString() : '—'} sub="Renews automatically while you are active" />
+    </div>
+
+    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 20, alignItems: 'flex-start' }}>
+      <Card>
+        <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 600, marginBottom: 4 }}>Your session</div>
+        <div style={{ fontSize: 12.5, color: dim, marginBottom: 16 }}>Details of the account and device you are using right now</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '130px 1fr', rowGap: 10, fontSize: 13 }}>
+          {rows.map(([l, v]) => <><span key={l} style={{ color: dim }}>{l}</span><span key={l + 'v'} style={{ wordBreak: 'break-all' }}>{v}</span></>)}
         </div>
-      )}
-
-      {/* KPI Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
-        <Card style={{ padding: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(212,175,55,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon d={icons.activity} size={16} style={{ color: '#D4AF37' }} />
-            </div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#8A90AB', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Active Sessions
-            </div>
-          </div>
-          <div style={{ fontSize: 24, fontFamily: 'Playfair Display, serif', fontWeight: 600, color: '#F7EFD8' }}>{sessions.length}</div>
-        </Card>
-
-        <Card style={{ padding: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(74,222,128,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon d={icons.shieldCheck} size={16} style={{ color: '#4ADE80' }} />
-            </div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#8A90AB', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              2FA Coverage
-            </div>
-          </div>
-          <div style={{ fontSize: 24, fontFamily: 'Playfair Display, serif', fontWeight: 600, color: twoFACoveragePct === 100 ? '#4ADE80' : '#F7EFD8' }}>
-            {twoFACoveragePct}%
-          </div>
-        </Card>
-
-        <Card style={{ padding: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(248,113,113,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon d={icons.alert} size={16} style={{ color: '#F87171' }} />
-            </div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#8A90AB', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Failed Logins (7d)
-            </div>
-          </div>
-          <div style={{ fontSize: 24, fontFamily: 'Playfair Display, serif', fontWeight: 600, color: failedAttempts7d > 0 ? '#F87171' : '#F7EFD8' }}>
-            {failedAttempts7d}
-          </div>
-        </Card>
-
-        <Card style={{ padding: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(212,175,55,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon d={icons.clock} size={16} style={{ color: '#D4AF37' }} />
-            </div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#8A90AB', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Last Incident
-            </div>
-          </div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: '#F7EFD8', marginTop: 4 }}>6 days ago</div>
-          <div style={{ fontSize: 11, color: '#8A90AB', marginTop: 2 }}>Failed login · Kyiv, UA</div>
-        </Card>
-      </div>
-
-      {/* Active Sessions */}
-      <div style={{ marginBottom: 28 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <div>
-            <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 600, color: '#F7EFD8' }}>
-              Active Admin Sessions
-            </div>
-            <div style={{ fontSize: 12.5, color: '#9AA0BA', marginTop: 2 }}>
-              Everyone currently signed in to the Starfix admin panel
-            </div>
-          </div>
+        <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(212,175,55,.14)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ fontSize: 12, color: dim, maxWidth: 260 }}>Lost a device or shared this login? End every session at once.</div>
+          <button onClick={signOutEverywhere} disabled={working} style={{ ...btn, color: '#F87171', borderColor: 'rgba(248,113,113,.45)' }}>{working ? 'Signing out…' : 'Sign out everywhere'}</button>
         </div>
+      </Card>
 
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(212,175,55,0.18)', background: 'rgba(255,255,255,0.04)' }}>
-                {['Admin', 'Device', 'Location / IP', 'Signed In', 'Last Active', ''].map(h => (
-                  <th key={h} style={{ padding: '12px 20px', fontSize: 11, fontWeight: 600, color: '#8A90AB', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sessions.map((s, i) => (
-                <tr key={s.email} style={{ borderBottom: i < sessions.length - 1 ? '1px solid rgba(212,175,55,0.18)' : 'none' }}>
-                  <td style={{ padding: '14px 20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src={s.avatar} alt={s.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontSize: 13.5, fontWeight: 600, color: '#F7EFD8' }}>{s.name}</span>
-                          {s.current && (
-                            <span style={{ fontSize: 10, fontWeight: 600, color: '#D4AF37', background: 'rgba(212,175,55,0.14)', padding: '1px 7px', borderRadius: 99 }}>
-                              This device
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ fontSize: 11.5, color: '#8A90AB' }}>{s.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '14px 20px', fontSize: 13, color: '#B8BCD0' }}>{s.device}</td>
-                  <td style={{ padding: '14px 20px' }}>
-                    <div style={{ fontSize: 13, color: '#F7EFD8' }}>{s.location}</div>
-                    <div style={{ fontSize: 11, color: '#8A90AB' }}>{s.ip}</div>
-                  </td>
-                  <td style={{ padding: '14px 20px', fontSize: 12.5, color: '#9AA0BA' }}>{s.startedAt}</td>
-                  <td style={{ padding: '14px 20px', fontSize: 12.5, color: '#F7EFD8', fontWeight: 500 }}>{s.lastActive}</td>
-                  <td style={{ padding: '14px 20px', textAlign: 'right' }}>
-                    {!s.current && (
-                      <button
-                        onClick={() => revokeSession(s.email)}
-                        style={{
-                          fontSize: 11.5, fontWeight: 600, color: '#F87171', background: 'rgba(248,113,113,0.12)',
-                          border: '1px solid rgba(248,113,113,0.45)', padding: '6px 12px', borderRadius: 8, cursor: 'pointer'
-                        }}
-                      >
-                        Revoke
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {sessions.length === 0 && (
-                <tr>
-                  <td colSpan={6} style={{ padding: '20px', textAlign: 'center', fontSize: 13, color: '#8A90AB' }}>
-                    No active sessions
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </Card>
-      </div>
-
-      {/* Two-Factor Authentication Status */}
-      <div style={{ marginBottom: 28 }}>
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 600, color: '#F7EFD8' }}>
-            Two-Factor Authentication Status
-          </div>
-          <div style={{ fontSize: 12.5, color: '#9AA0BA', marginTop: 2 }}>
-            Per-admin 2FA enrollment · policy-level enforcement lives in Settings → Security
-          </div>
+      <Card style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ padding: '20px 22px 14px' }}>
+          <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 600 }}>Administrator accounts</div>
+          <div style={{ fontSize: 12.5, color: dim, marginTop: 4 }}>Everyone whose profile has the admin role</div>
         </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead><tr style={{ background: 'rgba(212,175,55,.07)' }}>{['Admin', 'Added'].map(h => <th key={h} style={{ padding: '12px 22px', fontSize: 11.5, fontWeight: 600, color: '#D4AF37' }}>{h}</th>)}</tr></thead>
+          <tbody>
+            {admins.map(a => <tr key={a.id} style={{ borderTop: '1px solid rgba(212,175,55,.12)' }}>
+              <td style={{ padding: '14px 22px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg,#F4D67A,#B8901F)', color: '#0A0E1F', fontWeight: 700 }}>{(a.full_name || a.email || '?').charAt(0).toUpperCase()}</div>
+                  <div>
+                    <div style={{ fontSize: 13.5, fontWeight: 600 }}>{a.full_name || a.email}{u?.id === a.id && <span style={{ marginLeft: 8, fontSize: 10.5, fontWeight: 600, color: '#D4AF37', background: 'rgba(212,175,55,.14)', padding: '1px 8px', borderRadius: 99 }}>You</span>}</div>
+                    <div style={{ fontSize: 11.5, color: dim }}>{a.email}</div>
+                  </div>
+                </div>
+              </td>
+              <td style={{ padding: '14px 22px', fontSize: 12.5, color: muted }}>{when(a.created_at)}</td>
+            </tr>)}
+            {!admins.length && <tr><td colSpan={2} style={{ padding: 22, textAlign: 'center', fontSize: 13, color: dim }}>Loading administrators…</td></tr>}
+          </tbody>
+        </table>
+      </Card>
+    </div>
 
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(212,175,55,0.18)', background: 'rgba(255,255,255,0.04)' }}>
-                {['Admin', 'Role', 'Status'].map(h => (
-                  <th key={h} style={{ padding: '12px 20px', fontSize: 11, fontWeight: 600, color: '#8A90AB', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {ADMIN_2FA.map((a, i) => (
-                <tr key={a.email} style={{ borderBottom: i < ADMIN_2FA.length - 1 ? '1px solid rgba(212,175,55,0.18)' : 'none' }}>
-                  <td style={{ padding: '14px 20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src={a.avatar} alt={a.name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
-                      <div>
-                        <div style={{ fontSize: 13.5, fontWeight: 600, color: '#F7EFD8' }}>{a.name}</div>
-                        <div style={{ fontSize: 11.5, color: '#8A90AB' }}>{a.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '14px 20px' }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: '#F7EFD8', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(212,175,55,0.18)', padding: '3px 10px', borderRadius: 99 }}>
-                      {a.role}
-                    </span>
-                  </td>
-                  <td style={{ padding: '14px 20px' }}>
-                    {a.twoFactorEnabled ? (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, color: '#4ADE80', background: 'rgba(74,222,128,0.12)', padding: '4px 10px', borderRadius: 99 }}>
-                        <Icon d={icons.shieldCheck} size={12} />
-                        2FA Enabled
-                      </span>
-                    ) : (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, color: '#FBBF24', background: 'rgba(251,191,36,0.10)', padding: '4px 10px', borderRadius: 99 }}>
-                        <Icon d={icons.alert} size={12} />
-                        Not Enabled
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
-      </div>
-
-      {/* Recent Login Activity */}
-      <div>
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 600, color: '#F7EFD8' }}>
-            Recent Login Activity
-          </div>
-          <div style={{ fontSize: 12.5, color: '#9AA0BA', marginTop: 2 }}>
-            Successful logins, failed attempts, and account security events across all admins
-          </div>
-        </div>
-
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(212,175,55,0.18)', background: 'rgba(255,255,255,0.04)' }}>
-                {['Admin', 'Event', 'Device', 'Location / IP', 'Time'].map(h => (
-                  <th key={h} style={{ padding: '12px 20px', fontSize: 11, fontWeight: 600, color: '#8A90AB', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {LOGIN_EVENTS.map((e, i) => {
-                const tone = eventTone(e.event)
-                return (
-                  <tr key={i} style={{ borderBottom: i < LOGIN_EVENTS.length - 1 ? '1px solid rgba(212,175,55,0.18)' : 'none' }}>
-                    <td style={{ padding: '14px 20px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <img src={e.avatar} alt={e.name} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
-                        <span style={{ fontSize: 13, fontWeight: 600, color: '#F7EFD8' }}>{e.name}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: '14px 20px' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, color: tone.color, background: tone.bg, padding: '4px 10px', borderRadius: 99 }}>
-                        <Icon d={tone.icon} size={12} />
-                        {e.event}
-                      </span>
-                    </td>
-                    <td style={{ padding: '14px 20px', color: '#B8BCD0' }}>{e.device}</td>
-                    <td style={{ padding: '14px 20px' }}>
-                      <div style={{ color: '#F7EFD8' }}>{e.location}</div>
-                      <div style={{ fontSize: 11, color: '#8A90AB' }}>{e.ip}</div>
-                    </td>
-                    <td style={{ padding: '14px 20px', color: '#9AA0BA', fontSize: 12.5 }}>{e.time}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </Card>
-      </div>
-    </PageShell>
-  )
+    <div style={{ marginTop: 20, fontSize: 12.5, color: dim, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <Icon d={icons.eye} size={14} />
+      Full sign-in history and failed-login attempts are recorded in Supabase under Authentication → Audit Logs.
+    </div>
+  </PageShell>
 }

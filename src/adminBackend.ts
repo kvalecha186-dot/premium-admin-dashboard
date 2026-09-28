@@ -9,3 +9,37 @@ export async function getAdminExplore(){return db('explore_content?select=id,tit
 export async function getAdminConversations(){const [c,m]=await Promise.all([db('conversations?select=id,student_id,mentor_id,archived,created_at&order=created_at.desc&limit=500'),db('messages?select=id,conversation_id,sender,body,status,created_at&order=created_at.desc&limit=1000')]);return c.map((x:any)=>({...x,messages:m.filter((y:any)=>y.conversation_id===x.id).slice(0,5)}))}
 export async function getAdminAnalytics(){const [profiles,progress,bookings,reviews,notifications,saved]=await Promise.all([db('profiles?select=id,role,created_at'),db('user_progress?select=id,user_id,overall_progress,xp,streak,last_active_date'),db('bookings?select=id,status,amount,created_at,scheduled_start'),db('reviews?select=id,rating,created_at'),db('notifications?select=id,created_at'),db('saved_items?select=id,created_at')]);return{students:profiles.filter((x:any)=>x.role==='student').length,mentors:profiles.filter((x:any)=>x.role==='mentor').length,admins:profiles.filter((x:any)=>x.role==='admin').length,progressRecords:progress.length,completed:progress.filter((x:any)=>Number(x.overall_progress)>=100).length,totalXp:progress.reduce((s:any,x:any)=>s+(Number(x.xp)||0),0),avgProgress:progress.length?Math.round(progress.reduce((s:any,x:any)=>s+(Number(x.overall_progress)||0),0)/progress.length):0,active7:progress.filter((x:any)=>x.last_active_date&&Date.parse(x.last_active_date)>=Date.now()-7*86400000).length,bookings:bookings.length,confirmed:bookings.filter((x:any)=>['confirmed','completed'].includes(x.status)).length,revenue:bookings.reduce((s:any,x:any)=>s+(Number(x.amount)||0),0),avgRating:reviews.length?Math.round(reviews.reduce((s:any,x:any)=>s+Number(x.rating||0),0)/reviews.length*10)/10:0,reviews:reviews.length,notifications:notifications.length,saved:saved.length}}
 export async function getAdminPaths(){const[paths,milestones,progress]=await Promise.all([db('growth_paths?select=*&order=created_at.desc'),db('milestones?select=id,path_id'),db('user_progress?select=path_id,overall_progress&limit=5000')]);return paths.map((p:any)=>{const enrolled=progress.filter((r:any)=>r.path_id===p.id);return{...p,milestoneCount:milestones.filter((m:any)=>m.path_id===p.id).length,liveLearners:enrolled.length,completion:enrolled.length?Math.round(enrolled.reduce((s:any,r:any)=>s+(Number(r.overall_progress)||0),0)/enrolled.length):0}})}
+
+
+// ── Live ecosystem data (single fetch shared by Overview, Paths, Mentors, Mentor–Mentee) ──
+async function safe(p:Promise<any>):Promise<any[]>{try{const r=await p;return Array.isArray(r)?r:[]}catch{return []}}
+export async function getEcosystem(){
+  const[profiles,mentors,paths,milestones,progress,bookings,convos,reviews]=await Promise.all([
+    safe(db('profiles?select=id,full_name,email,avatar_url,role,country,career_goal,goal_title,level,created_at&order=created_at.desc')),
+    safe(db('mentors?select=*&order=students_count.desc')),
+    safe(db('growth_paths?select=*&order=created_at.asc')),
+    safe(db('milestones?select=*&order=order_index.asc')),
+    safe(db('user_progress?select=*&limit=5000')),
+    safe(db('bookings?select=*&order=created_at.desc&limit=1000')),
+    safe(db('conversations?select=id,student_id,mentor_id,created_at&limit=1000')),
+    safe(db('reviews?select=*&limit=1000')),
+  ])
+  return{profiles,mentors,paths,milestones,progress,bookings,convos,reviews,fetchedAt:Date.now()}
+}
+
+// ── Name lookups so tables show people, not UUIDs ──
+async function getMaps(){
+  const[profiles,mentors]=await Promise.all([safe(db('profiles?select=id,full_name,email')),safe(db('mentors?select=id,name,profile_id'))])
+  const p=new Map<string,any>(profiles.map((x:any)=>[x.id,x]))
+  const m=new Map<string,any>()
+  mentors.forEach((x:any)=>{m.set(x.id,x);if(x.profile_id)m.set(x.profile_id,x)})
+  return{p,m}
+}
+export async function getBookingsNamed(){
+  const[rows,{p}]=await Promise.all([getAdminBookings(),getMaps()])
+  return rows.map((b:any)=>({...b,student_name:p.get(b.student_id)?.full_name||p.get(b.student_id)?.email||null}))
+}
+export async function getConversationsNamed(){
+  const[rows,{p,m}]=await Promise.all([getAdminConversations(),getMaps()])
+  return rows.map((c:any)=>({...c,messageCount:c.messages?.length||0,student_name:p.get(c.student_id)?.full_name||p.get(c.student_id)?.email||null,mentor_name:m.get(c.mentor_id)?.name||p.get(c.mentor_id)?.full_name||null}))
+}
