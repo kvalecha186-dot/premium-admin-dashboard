@@ -57,19 +57,43 @@ function build(d: any) {
     const bk = d.bookings.filter((b: any) => b.mentor_id === m.id)
     const cv = d.convos.filter((c: any) => c.mentor_id === m.id || (m.profile_id && c.mentor_id === m.profile_id))
     const rv = d.reviews.filter((r: any) => r.mentor_id === m.id)
+    const fb = d.feedback.filter((r: any) => r.mentor_id === m.id)
+    const gl = d.goals.filter((r: any) => r.mentor_id === m.id)
+    const er = d.earnings.filter((r: any) => r.mentor_id === m.id)
+    const st = d.sessionTypes.filter((r: any) => r.mentor_id === m.id)
+    const av = d.availability.filter((r: any) => r.mentor_id === m.id)
     const mm = new Map<string, any>()
     bk.forEach((b: any) => {
-      const e = mm.get(b.student_id) || { id: b.student_id, sessions: 0, spent: 0, last: null, convo: false }
+      const e = mm.get(b.student_id) || { id: b.student_id, sessions: 0, spent: 0, last: null, convo: false, feedback: false }
       e.sessions++; e.spent += num(b.amount)
       const t = b.scheduled_start || b.created_at
       if (!e.last || t > e.last) e.last = t
       mm.set(b.student_id, e)
     })
-    cv.forEach((c: any) => { const e = mm.get(c.student_id) || { id: c.student_id, sessions: 0, spent: 0, last: null, convo: false }; e.convo = true; mm.set(c.student_id, e) })
+    cv.forEach((x: any) => { const e = mm.get(x.student_id) || { id: x.student_id, sessions: 0, spent: 0, last: null, convo: false, feedback: false }; e.convo = true; mm.set(x.student_id, e) })
+    fb.forEach((x: any) => { const e = mm.get(x.student_id) || { id: x.student_id, sessions: 0, spent: 0, last: x.created_at, convo: false, feedback: false }; e.feedback = true; mm.set(x.student_id, e) })
     const mentees = [...mm.values()].map(e => ({ ...e, name: nameOf(e.id) }))
+    const reviewAvg = rv.length ? rv.reduce((s: number, r: any) => s + num(r.rating), 0) / rv.length : null
+    const feedbackAvg = fb.length ? fb.reduce((s: number, r: any) => s + num(r.rating), 0) / fb.length : null
+    const completed = bk.filter((b: any) => String(b.status || '').toLowerCase() === 'completed').length
+    const confirmed = bk.filter((b: any) => ['confirmed','completed'].includes(String(b.status || '').toLowerCase())).length
+    const cancelled = bk.filter((b: any) => ['cancelled','canceled'].includes(String(b.status || '').toLowerCase())).length
+    const completionRate = bk.length ? Math.round(completed / bk.length * 100) : null
+    const cancellationRate = bk.length ? Math.round(cancelled / bk.length * 100) : null
+    const performanceSignals = [reviewAvg !== null, fb.length > 0, bk.length > 0].filter(Boolean).length
+    let performance = 'Insufficient live data'
+    let performanceTone = 'gray'
+    if (performanceSignals >= 2) {
+      const score = (reviewAvg || feedbackAvg || 0) * 20 * 0.55 + (feedbackAvg || reviewAvg || 0) * 20 * 0.2 + (completionRate ?? 0) * 0.15 + Math.min(100, mentees.length * 10) * 0.1
+      performance = score >= 90 ? 'Exceptional' : score >= 80 ? 'Strong' : score >= 65 ? 'Developing' : 'Needs attention'
+      performanceTone = score >= 90 ? 'green' : score >= 80 ? 'gold' : score >= 65 ? 'amber' : 'red'
+    }
     return {
       ...m, bookings: bk.length, revenue: bk.reduce((s: number, b: any) => s + num(b.amount), 0), mentees, convos: cv.length,
-      reviewAvg: rv.length ? rv.reduce((s: number, r: any) => s + num(r.rating), 0) / rv.length : null, reviewCount: rv.length,
+      reviews: rv, reviewAvg, reviewCount: rv.length, feedback: fb, feedbackAvg, feedbackCount: fb.length,
+      goals: gl, earnings: er, sessionTypes: st, availabilitySlots: av,
+      completed, confirmed, cancelled, completionRate, cancellationRate,
+      liveMenteeCount: mentees.length, performance, performanceTone, performanceSignals,
     }
   })
 
