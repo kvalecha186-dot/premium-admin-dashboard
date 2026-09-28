@@ -14,7 +14,7 @@ export async function getAdminPaths(){const[paths,milestones,progress]=await Pro
 // ── Live ecosystem data (single fetch shared by Overview, Paths, Mentors, Mentor–Mentee) ──
 async function safe(p:Promise<any>):Promise<any[]>{try{const r=await p;return Array.isArray(r)?r:[]}catch{return []}}
 export async function getEcosystem(){
-  const[profiles,mentors,paths,milestones,progress,bookings,convos,reviews]=await Promise.all([
+  const[profiles,mentors,paths,milestones,progress,bookings,convos,reviews,feedback,goals,earnings,sessionTypes,availability]=await Promise.all([
     safe(db('profiles?select=id,full_name,email,avatar_url,role,country,career_goal,goal_title,level,created_at&order=created_at.desc')),
     safe(db('mentors?select=*&order=students_count.desc')),
     safe(db('growth_paths?select=*&order=created_at.asc')),
@@ -22,9 +22,14 @@ export async function getEcosystem(){
     safe(db('user_progress?select=*&limit=5000')),
     safe(db('bookings?select=*&order=created_at.desc&limit=1000')),
     safe(db('conversations?select=id,student_id,mentor_id,created_at&limit=1000')),
-    safe(db('reviews?select=*&limit=1000')),
+    safe(db('reviews?select=*&order=created_at.desc&limit=1000')),
+    safe(db('mentor_feedback?select=*&order=created_at.desc&limit=1000')),
+    safe(db('mentor_goals?select=*&order=created_at.desc&limit=1000')),
+    safe(db('mentor_earnings?select=*&order=created_at.desc&limit=1000')),
+    safe(db('session_types?select=*&order=created_at.desc&limit=1000')),
+    safe(db('mentor_availability?select=*&order=start_at.asc&limit=1000')),
   ])
-  return{profiles,mentors,paths,milestones,progress,bookings,convos,reviews,fetchedAt:Date.now()}
+  return{profiles,mentors,paths,milestones,progress,bookings,convos,reviews,feedback,goals,earnings,sessionTypes,availability,fetchedAt:Date.now()}
 }
 
 // ── Name lookups so tables show people, not UUIDs ──
