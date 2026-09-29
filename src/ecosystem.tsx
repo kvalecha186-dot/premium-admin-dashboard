@@ -332,86 +332,136 @@ function MentorCard({ m }: { m: any }) {
     ['Profile position', m.profilePosition ? '#' + m.profilePosition + ' / ' + m.profilePositionTotal : '—'],
   ]
   const info = [
-    ['Location', m.location], ['Experience', num(m.years_experience) ? m.years_experience + ' years' : null],
-    ['Education', m.education], ['Languages', (m.languages || []).join(', ')],
-    ['Email', m.email], ['LinkedIn', m.linkedin_url]
+    ['Location', m.location],
+    ['Experience', num(m.years_experience) ? m.years_experience + ' years' : null],
+    ['Education', m.education],
+    ['Languages', (m.languages || []).join(', ')],
+    ['Email', m.email],
+    ['LinkedIn', m.linkedin_url],
   ].filter(x => x[1])
-  return <Card style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-    <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-      <Avatar name={m.name} color={m.color} size={54} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <button onClick={() => setOpen(!open)} style={{ border: 0, padding: 0, background: 'transparent', cursor: 'pointer', color: '#F7EFD8', textAlign: 'left', fontFamily: 'Playfair Display,serif', fontSize: 20, fontWeight: 600 }}>{m.name}</button>
-        <div style={{ fontSize: 12.5, color: muted }}>{m.headline}{m.company ? ' · ' + m.company : ''}</div>
-        <div style={{ fontSize: 11, color: dim, marginTop: 4 }}>{open ? 'Click name to collapse profile' : 'Click name to view full profile, qualifications and reviews'}</div>
-      </div>
-      <div style={{ textAlign: 'right' }}>
-        <div style={{ fontSize: 14, color: '#F4D67A' }}>★ {num(m.rating).toFixed(1)}</div>
-        <div style={{ marginTop: 6 }}><Tag tone={availTone(m.availability)}>{m.availability || 'Availability not set'}</Tag></div>
-      </div>
-    </div>
 
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-      {m.category && <Tag>{m.category}</Tag>}
-      {(m.skills || []).map((s: string) => <Tag key={s} tone="gray">{s}</Tag>)}
-      {m.free || m.offers_free_intro ? <Tag tone="green">Free intro</Tag> : null}
-      <Tag tone={m.performanceTone}>{m.performance}</Tag>
-    </div>
-
-    <div style={grid(5, 10)}>{rows.map(([l, v]) => <div key={String(l)} style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(212,175,55,.12)' }}>
-      <div style={{ fontSize: 14.5, fontWeight: 600, color: '#F4D67A' }}>{v}</div><div style={{ fontSize: 11, color: dim, marginTop: 2 }}>{l}</div>
-    </div>)}</div>
-
-    {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 4, borderTop: '1px solid rgba(212,175,55,.12)' }}>
-      <div style={{ ...grid(3, 10) }}>
-        <div style={{ padding: 12, borderRadius: 10, background: 'rgba(255,255,255,.035)' }}><div style={{ color: '#F4D67A', fontWeight: 700 }}>{m.performance}</div><div style={{ fontSize: 11, color: dim, marginTop: 4 }}>Live performance position</div></div>
-        <div style={{ padding: 12, borderRadius: 10, background: 'rgba(255,255,255,.035)' }}><div style={{ color: '#F4D67A', fontWeight: 700 }}>{m.completionRate === null ? '—' : m.completionRate + '%'}</div><div style={{ fontSize: 11, color: dim, marginTop: 4 }}>Session completion</div></div>
-        <div style={{ padding: 12, borderRadius: 10, background: 'rgba(255,255,255,.035)' }}><div style={{ color: '#F4D67A', fontWeight: 700 }}>{m.confirmed}</div><div style={{ fontSize: 11, color: dim, marginTop: 4 }}>Confirmed/completed</div></div>
-      </div>
-
-      <div>
-        <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 8 }}>Qualifications & professional profile</div>
-        <div style={{ fontSize: 13, color: muted, lineHeight: 1.65 }}>{m.bio || 'No mentor bio has been added yet.'}</div>
-        {m.mentoring_approach && <div style={{ fontSize: 13, color: muted, lineHeight: 1.65, marginTop: 8 }}><b style={{ color: '#F7EFD8' }}>Mentoring approach: </b>{m.mentoring_approach}</div>}
-        {info.length ? <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', rowGap: 7, marginTop: 12, fontSize: 12.5 }}>{info.map(([l, v]) => <div key={String(l)} style={{ display: 'contents' }}><span style={{ color: dim }}>{l}</span><span style={{ wordBreak: 'break-word' }}>{v}</span></div>)}</div> : <div style={{ fontSize: 12.5, color: dim, marginTop: 10 }}>No additional qualification fields have been entered.</div>}
-      </div>
-
-      <div>
-        <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 9 }}>Verified learner reviews</div>
-        {m.reviews.length ? <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>{m.reviews.map((r: any) => <div key={r.id} style={{ padding: 12, borderRadius: 10, background: 'rgba(255,255,255,.035)', border: '1px solid rgba(212,175,55,.1)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><span style={{ color: '#F4D67A' }}>{'★'.repeat(Math.max(0, Math.min(5, Number(r.rating) || 0)))} <span style={{ color: dim }}>{r.rating}/5</span></span><span style={{ fontSize: 11, color: dim }}>{r.created_at ? new Date(r.created_at).toLocaleDateString() : '—'}</span></div>
-          <div style={{ fontSize: 12.5, color: muted, lineHeight: 1.55, marginTop: 7 }}>{r.review_text || 'No written review.'}</div>
-        </div>)}</div> : <div style={{ fontSize: 12.5, color: dim }}>No verified learner reviews are stored yet. The profile rating above is kept separate from verified reviews.</div>}
-      </div>
-
-      <div>
-        <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 9 }}>Mentor feedback</div>
-        {m.feedback.length ? <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{m.feedback.slice(0, 5).map((r: any) => <div key={r.id} style={{ fontSize: 12.5, color: muted, padding: '8px 0', borderTop: '1px solid rgba(212,175,55,.08)' }}><b style={{ color: '#F4D67A' }}>{r.rating ? r.rating + '/5 · ' : ''}</b>{r.content || r.focus || 'Feedback recorded.'}</div>)}</div> : <div style={{ fontSize: 12.5, color: dim }}>No mentor feedback records yet.</div>}
-      </div>
-
-      <div>
-        <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 9 }}>Actual Starfix mentees</div>
-        {m.mentees.length ? m.mentees.map((e: any) => <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12.5, padding: '8px 0', borderTop: '1px solid rgba(212,175,55,.1)' }}>
-          <span><b>{e.name}</b>{e.feedback ? ' · feedback' : ''}</span><span style={{ color: dim }}>{e.sessions} sessions · {money(e.spent)} · {ago(e.last)}</span>
-        </div>) : <div style={{ fontSize: 12.5, color: dim }}>No live booking, conversation or feedback relationship is recorded for this mentor yet.</div>}
-      </div>
-
-      <div>
-        <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 9 }}>Mentor operations</div>
-        <div style={{ ...grid(3, 10) }}>
-          {[['Goals', m.goals.length], ['Follow-ups', m.followups.length], ['Shared resources', m.sharedResources.length], ['Notes', m.notes.length], ['Schedule rules', m.scheduleRules.length], ['Blocked dates', m.blockedDates.length]].map(([l,v]) =>
-            <div key={String(l)} style={{ padding: 10, borderRadius: 10, background: 'rgba(255,255,255,.035)' }}>
-              <div style={{ color: '#F4D67A', fontWeight: 700 }}>{v}</div><div style={{ fontSize: 11, color: dim, marginTop: 3 }}>{l}</div>
-            </div>
-          )}
+  return (
+    <Card style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+        <Avatar name={m.name} color={m.color} size={54} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <button
+            onClick={() => setOpen(!open)}
+            style={{ border: 0, padding: 0, background: 'transparent', cursor: 'pointer', color: '#F7EFD8', textAlign: 'left', fontFamily: 'Playfair Display,serif', fontSize: 20, fontWeight: 600 }}
+          >
+            {m.name}
+          </button>
+          <div style={{ fontSize: 12.5, color: muted }}>{m.headline}{m.company ? ' · ' + m.company : ''}</div>
+          <div style={{ fontSize: 11, color: dim, marginTop: 4 }}>
+            {open ? 'Click name to collapse profile' : 'Click name to view full profile, qualifications and reviews'}
+          </div>
         </div>
-        {m.followups.length ? <div style={{ marginTop: 10, fontSize: 12.5, color: muted }}>Latest follow-up: {m.followups[0].summary || m.followups[0].next_steps || 'Recorded follow-up'}{m.followups[0].follow_up_date ? ' · ' + new Date(m.followups[0].follow_up_date).toLocaleDateString() : ''}</div> : null}
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 14, color: '#F4D67A' }}>★ {num(m.rating).toFixed(1)}</div>
+          <div style={{ marginTop: 6 }}><Tag tone={availTone(m.availability)}>{m.availability || 'Availability not set'}</Tag></div>
+        </div>
       </div>
 
-      <div style={{ fontSize: 11, color: '#777E9A', lineHeight: 1.5 }}>
-        Live performance position is calculated only when Starfix has enough live activity (bookings, verified reviews and mentor feedback). The profile-signal position is a separate admin indicator derived from the mentor profile's displayed rating, displayed learner reach and onboarding state; it is not an official Starfix ranking.
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {m.category && <Tag>{m.category}</Tag>}
+        {(m.skills || []).map((s: string) => <Tag key={s} tone="gray">{s}</Tag>)}
+        {m.free || m.offers_free_intro ? <Tag tone="green">Free intro</Tag> : null}
+        <Tag tone={m.performanceTone}>{m.performance}</Tag>
       </div>
-    </div>
-  </Card>
+
+      <div style={grid(5, 10)}>
+        {rows.map(([l, v]) => (
+          <div key={String(l)} style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(212,175,55,.12)' }}>
+            <div style={{ fontSize: 14.5, fontWeight: 600, color: '#F4D67A' }}>{v}</div>
+            <div style={{ fontSize: 11, color: dim, marginTop: 2 }}>{l}</div>
+          </div>
+        ))}
+      </div>
+
+      {open && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 4, borderTop: '1px solid rgba(212,175,55,.12)' }}>
+          <div style={grid(3, 10)}>
+            <div style={{ padding: 12, borderRadius: 10, background: 'rgba(255,255,255,.035)' }}><div style={{ color: '#F4D67A', fontWeight: 700 }}>{m.performance}</div><div style={{ fontSize: 11, color: dim, marginTop: 4 }}>Live performance position</div></div>
+            <div style={{ padding: 12, borderRadius: 10, background: 'rgba(255,255,255,.035)' }}><div style={{ color: '#F4D67A', fontWeight: 700 }}>{m.completionRate === null ? '—' : m.completionRate + '%'}</div><div style={{ fontSize: 11, color: dim, marginTop: 4 }}>Session completion</div></div>
+            <div style={{ padding: 12, borderRadius: 10, background: 'rgba(255,255,255,.035)' }}><div style={{ color: '#F4D67A', fontWeight: 700 }}>{m.confirmed}</div><div style={{ fontSize: 11, color: dim, marginTop: 4 }}>Confirmed/completed</div></div>
+          </div>
+
+          <div>
+            <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 8 }}>Qualifications & professional profile</div>
+            <div style={{ fontSize: 13, color: muted, lineHeight: 1.65 }}>{m.bio || 'No mentor bio has been added yet.'}</div>
+            {m.mentoring_approach && <div style={{ fontSize: 13, color: muted, lineHeight: 1.65, marginTop: 8 }}><b style={{ color: '#F7EFD8' }}>Mentoring approach: </b>{m.mentoring_approach}</div>}
+            {info.length ? (
+              <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', rowGap: 7, marginTop: 12, fontSize: 12.5 }}>
+                {info.map(([l, v]) => (
+                  <div key={String(l)} style={{ display: 'contents' }}>
+                    <span style={{ color: dim }}>{l}</span>
+                    <span style={{ wordBreak: 'break-word' }}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            ) : <div style={{ fontSize: 12.5, color: dim, marginTop: 10 }}>No additional qualification fields have been entered.</div>}
+          </div>
+
+          <div>
+            <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 9 }}>Verified learner reviews</div>
+            {m.reviews.length ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                {m.reviews.map((r: any) => (
+                  <div key={r.id} style={{ padding: 12, borderRadius: 10, background: 'rgba(255,255,255,.035)', border: '1px solid rgba(212,175,55,.1)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                      <span style={{ color: '#F4D67A' }}>{'★'.repeat(Math.max(0, Math.min(5, Number(r.rating) || 0)))} <span style={{ color: dim }}>{r.rating}/5</span></span>
+                      <span style={{ fontSize: 11, color: dim }}>{r.created_at ? new Date(r.created_at).toLocaleDateString() : '—'}</span>
+                    </div>
+                    <div style={{ fontSize: 12.5, color: muted, lineHeight: 1.55, marginTop: 7 }}>{r.review_text || 'No written review.'}</div>
+                  </div>
+                ))}
+              </div>
+            ) : <div style={{ fontSize: 12.5, color: dim }}>No verified learner reviews are stored yet. The profile rating above is kept separate from verified reviews.</div>}
+          </div>
+
+          <div>
+            <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 9 }}>Mentor feedback</div>
+            {m.feedback.length ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {m.feedback.slice(0, 5).map((r: any) => (
+                  <div key={r.id} style={{ fontSize: 12.5, color: muted, padding: '8px 0', borderTop: '1px solid rgba(212,175,55,.08)' }}>
+                    <b style={{ color: '#F4D67A' }}>{r.rating ? r.rating + '/5 · ' : ''}</b>{r.content || r.focus || 'Feedback recorded.'}
+                  </div>
+                ))}
+              </div>
+            ) : <div style={{ fontSize: 12.5, color: dim }}>No mentor feedback records yet.</div>}
+          </div>
+
+          <div>
+            <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 9 }}>Actual Starfix mentees</div>
+            {m.mentees.length ? m.mentees.map((e: any) => (
+              <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12.5, padding: '8px 0', borderTop: '1px solid rgba(212,175,55,.1)' }}>
+                <span><b>{e.name}</b>{e.feedback ? ' · feedback' : ''}</span>
+                <span style={{ color: dim }}>{e.sessions} sessions · {money(e.spent)} · {ago(e.last)}</span>
+              </div>
+            )) : <div style={{ fontSize: 12.5, color: dim }}>No live booking, conversation or feedback relationship is recorded for this mentor yet.</div>}
+          </div>
+
+          <div>
+            <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 9 }}>Mentor operations</div>
+            <div style={grid(3, 10)}>
+              {[['Goals', m.goals.length], ['Follow-ups', m.followups.length], ['Shared resources', m.sharedResources.length], ['Notes', m.notes.length], ['Schedule rules', m.scheduleRules.length], ['Blocked dates', m.blockedDates.length]].map(([l, v]) => (
+                <div key={String(l)} style={{ padding: 10, borderRadius: 10, background: 'rgba(255,255,255,.035)' }}>
+                  <div style={{ color: '#F4D67A', fontWeight: 700 }}>{v}</div>
+                  <div style={{ fontSize: 11, color: dim, marginTop: 3 }}>{l}</div>
+                </div>
+              ))}
+            </div>
+            {m.followups.length ? <div style={{ marginTop: 10, fontSize: 12.5, color: muted }}>Latest follow-up: {m.followups[0].summary || m.followups[0].next_steps || 'Recorded follow-up'}{m.followups[0].follow_up_date ? ' · ' + new Date(m.followups[0].follow_up_date).toLocaleDateString() : ''}</div> : null}
+          </div>
+
+          <div style={{ fontSize: 11, color: '#777E9A', lineHeight: 1.5 }}>
+            Live performance position is calculated only when Starfix has enough live activity (bookings, verified reviews and mentor feedback). The profile-signal position is a separate admin indicator derived from the mentor profile's displayed rating, displayed learner reach and onboarding state; it is not an official Starfix ranking.
+          </div>
+        </div>
+      )}
+    </Card>
+  )
 }
 
 export function LiveMentors() {
