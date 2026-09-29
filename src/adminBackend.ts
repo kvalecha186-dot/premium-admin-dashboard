@@ -29,8 +29,16 @@ export async function getEcosystem(){
     safe(db('mentor_earnings?select=*&order=created_at.desc&limit=1000')),
     safe(db('session_types?select=*&order=created_at.desc&limit=1000')),
     safe(db('mentor_availability?select=*&order=start_at.asc&limit=1000')),
+    safe(db('session_followups?select=*&order=created_at.desc&limit=1000')),
+    safe(db('shared_resources?select=*&order=created_at.desc&limit=1000')),
+    safe(db('mentor_notes?select=*&order=created_at.desc&limit=1000')),
+    safe(db('mentor_schedule_rules?select=*&order=day_of_week.asc&limit=1000')),
+    safe(db('mentor_blocked_dates?select=*&order=blocked_date.asc&limit=1000')),
+    safe(db('milestone_progress?select=*&limit=10000')),
+    safe(db('watch_queue?select=*&order=created_at.desc&limit=5000')),
+    safe(db('xp_transactions?select=*&order=created_at.desc&limit=5000')),
   ])
-  return{profiles,mentors,paths,milestones,resources,progress,bookings,convos,reviews,feedback,goals,earnings,sessionTypes,availability,fetchedAt:Date.now()}
+  return{profiles,mentors,paths,milestones,resources,progress,bookings,convos,reviews,feedback,goals,earnings,sessionTypes,availability,followups,sharedResources,notes,scheduleRules,blockedDates,milestoneProgress,watchQueue,xpTransactions,fetchedAt:Date.now()}
 }
 
 // ── Name lookups so tables show people, not UUIDs ──
