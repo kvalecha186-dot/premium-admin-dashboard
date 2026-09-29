@@ -38,7 +38,6 @@ export async function getEcosystem(){
     safe(db('watch_queue?select=*&order=created_at.desc&limit=5000')),
     safe(db('xp_transactions?select=*&order=created_at.desc&limit=5000')),
     safe(db('saved_items?select=*&order=saved_at.desc&limit=5000')),
-    safe(db('watch_queue?select=*&order=created_at.desc&limit=5000')),
     safe(db('notifications?select=*&order=created_at.desc&limit=5000')),
   ])
   return{profiles,mentors,paths,milestones,resources,progress,bookings,convos,reviews,feedback,goals,earnings,sessionTypes,availability,followups,sharedResources,notes,scheduleRules,blockedDates,milestoneProgress,watchQueue,xpTransactions,savedItems,notifications,fetchedAt:Date.now()}
