@@ -14,7 +14,7 @@ export async function getAdminPaths(){const[paths,milestones,progress]=await Pro
 // ── Live ecosystem data (single fetch shared by Overview, Paths, Mentors, Mentor–Mentee) ──
 async function safe(p:Promise<any>):Promise<any[]>{try{const r=await p;return Array.isArray(r)?r:[]}catch{return []}}
 export async function getEcosystem(){
-  const[profiles,mentors,paths,milestones,resources,progress,bookings,convos,reviews,feedback,goals,earnings,sessionTypes,availability,followups,sharedResources,notes,scheduleRules,blockedDates,milestoneProgress,watchQueue,xpTransactions]=await Promise.all([
+  const[profiles,mentors,paths,milestones,resources,progress,bookings,convos,reviews,feedback,goals,earnings,sessionTypes,availability,followups,sharedResources,notes,scheduleRules,blockedDates,milestoneProgress,watchQueue,xpTransactions,savedItems,notifications]=await Promise.all([
     safe(db('profiles?select=id,full_name,email,avatar_url,role,country,career_goal,goal_title,level,created_at&order=created_at.desc')),
     safe(db('mentors?select=*&order=students_count.desc')),
     safe(db('growth_paths?select=*&order=created_at.asc')),
@@ -37,8 +37,11 @@ export async function getEcosystem(){
     safe(db('milestone_progress?select=*&limit=10000')),
     safe(db('watch_queue?select=*&order=created_at.desc&limit=5000')),
     safe(db('xp_transactions?select=*&order=created_at.desc&limit=5000')),
+    safe(db('saved_items?select=*&order=saved_at.desc&limit=5000')),
+    safe(db('watch_queue?select=*&order=created_at.desc&limit=5000')),
+    safe(db('notifications?select=*&order=created_at.desc&limit=5000')),
   ])
-  return{profiles,mentors,paths,milestones,resources,progress,bookings,convos,reviews,feedback,goals,earnings,sessionTypes,availability,followups,sharedResources,notes,scheduleRules,blockedDates,milestoneProgress,watchQueue,xpTransactions,fetchedAt:Date.now()}
+  return{profiles,mentors,paths,milestones,resources,progress,bookings,convos,reviews,feedback,goals,earnings,sessionTypes,availability,followups,sharedResources,notes,scheduleRules,blockedDates,milestoneProgress,watchQueue,xpTransactions,savedItems,notifications,fetchedAt:Date.now()}
 }
 
 // ── Name lookups so tables show people, not UUIDs ──
