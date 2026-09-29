@@ -62,6 +62,11 @@ function build(d: any) {
     const er = d.earnings.filter((r: any) => r.mentor_id === m.id)
     const st = d.sessionTypes.filter((r: any) => r.mentor_id === m.id)
     const av = d.availability.filter((r: any) => r.mentor_id === m.id)
+    const fu = d.followups.filter((r: any) => r.mentor_id === m.id)
+    const sr = d.sharedResources.filter((r: any) => r.mentor_id === m.id)
+    const nt = d.notes.filter((r: any) => r.mentor_id === m.id)
+    const rules = d.scheduleRules.filter((r: any) => r.mentor_id === m.id)
+    const blocked = d.blockedDates.filter((r: any) => r.mentor_id === m.id)
     const mm = new Map<string, any>()
     bk.forEach((b: any) => {
       const e = mm.get(b.student_id) || { id: b.student_id, sessions: 0, spent: 0, last: null, convo: false, feedback: false }
@@ -92,10 +97,16 @@ function build(d: any) {
       ...m, bookings: bk.length, revenue: bk.reduce((s: number, b: any) => s + num(b.amount), 0), mentees, convos: cv.length,
       reviews: rv, reviewAvg, reviewCount: rv.length, feedback: fb, feedbackAvg, feedbackCount: fb.length,
       goals: gl, earnings: er, sessionTypes: st, availabilitySlots: av,
+      followups: fu, sharedResources: sr, notes: nt, scheduleRules: rules, blockedDates: blocked,
       completed, confirmed, cancelled, completionRate, cancellationRate,
       liveMenteeCount: mentees.length, performance, performanceTone, performanceSignals,
+      profileSignalScore: Math.round(Math.min(100, (num(m.rating) / 5) * 70 + Math.min(1, num(m.students_count) / 3500) * 20 + (m.onboarding_completed ? 10 : 0))),
     }
   })
+
+  const orderedMentors = [...mentors].sort((a: any, b: any) => b.profileSignalScore - a.profileSignalScore || num(b.rating) - num(a.rating) || num(b.students_count) - num(a.students_count))
+  const positionById = new Map(orderedMentors.map((x: any, i: number) => [x.id, i + 1]))
+  mentors.forEach((x: any) => { x.profilePosition = positionById.get(x.id) || null; x.profilePositionTotal = mentors.length })
 
   const live = d.bookings.filter((b: any) => !['cancelled', 'canceled'].includes(String(b.status || '').toLowerCase()))
   return {
@@ -311,6 +322,7 @@ function MentorCard({ m }: { m: any }) {
     ['Sessions', m.bookings],
     ['Reviews', m.reviewCount],
     ['Rating', m.reviewCount ? m.reviewAvg.toFixed(1) + '★' : 'Profile ' + num(m.rating).toFixed(1) + '★'],
+    ['Profile position', m.profilePosition ? '#' + m.profilePosition + ' / ' + m.profilePositionTotal : '—'],
   ]
   const info = [
     ['Location', m.location], ['Experience', num(m.years_experience) ? m.years_experience + ' years' : null],
@@ -338,7 +350,7 @@ function MentorCard({ m }: { m: any }) {
       <Tag tone={m.performanceTone}>{m.performance}</Tag>
     </div>
 
-    <div style={grid(4, 10)}>{rows.map(([l, v]) => <div key={String(l)} style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(212,175,55,.12)' }}>
+    <div style={grid(5, 10)}>{rows.map(([l, v]) => <div key={String(l)} style={{ padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(212,175,55,.12)' }}>
       <div style={{ fontSize: 14.5, fontWeight: 600, color: '#F4D67A' }}>{v}</div><div style={{ fontSize: 11, color: dim, marginTop: 2 }}>{l}</div>
     </div>)}</div>
 
@@ -353,7 +365,7 @@ function MentorCard({ m }: { m: any }) {
         <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 8 }}>Qualifications & professional profile</div>
         <div style={{ fontSize: 13, color: muted, lineHeight: 1.65 }}>{m.bio || 'No mentor bio has been added yet.'}</div>
         {m.mentoring_approach && <div style={{ fontSize: 13, color: muted, lineHeight: 1.65, marginTop: 8 }}><b style={{ color: '#F7EFD8' }}>Mentoring approach: </b>{m.mentoring_approach}</div>}
-        {info.length ? <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', rowGap: 7, marginTop: 12, fontSize: 12.5 }}>{info.map(([l, v]) => <><span key={l as string} style={{ color: dim }}>{l}</span><span key={l + 'v'} style={{ wordBreak: 'break-word' }}>{v}</span></>)}</div> : <div style={{ fontSize: 12.5, color: dim, marginTop: 10 }}>No additional qualification fields have been entered.</div>}
+        {info.length ? <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', rowGap: 7, marginTop: 12, fontSize: 12.5 }}>{info.map(([l, v]) => <div key={String(l)} style={{ display: 'contents' }}><span style={{ color: dim }}>{l}</span><span style={{ wordBreak: 'break-word' }}>{v}</span></div>)}</div> : <div style={{ fontSize: 12.5, color: dim, marginTop: 10 }}>No additional qualification fields have been entered.</div>}
       </div>
 
       <div>
@@ -376,8 +388,20 @@ function MentorCard({ m }: { m: any }) {
         </div>) : <div style={{ fontSize: 12.5, color: dim }}>No live booking, conversation or feedback relationship is recorded for this mentor yet.</div>}
       </div>
 
+      <div>
+        <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 9 }}>Mentor operations</div>
+        <div style={{ ...grid(3, 10) }}>
+          {[['Goals', m.goals.length], ['Follow-ups', m.followups.length], ['Shared resources', m.sharedResources.length], ['Notes', m.notes.length], ['Schedule rules', m.scheduleRules.length], ['Blocked dates', m.blockedDates.length]].map(([l,v]) =>
+            <div key={String(l)} style={{ padding: 10, borderRadius: 10, background: 'rgba(255,255,255,.035)' }}>
+              <div style={{ color: '#F4D67A', fontWeight: 700 }}>{v}</div><div style={{ fontSize: 11, color: dim, marginTop: 3 }}>{l}</div>
+            </div>
+          )}
+        </div>
+        {m.followups.length ? <div style={{ marginTop: 10, fontSize: 12.5, color: muted }}>Latest follow-up: {m.followups[0].summary || m.followups[0].next_steps || 'Recorded follow-up'}{m.followups[0].follow_up_date ? ' · ' + new Date(m.followups[0].follow_up_date).toLocaleDateString() : ''}</div> : null}
+      </div>
+
       <div style={{ fontSize: 11, color: '#777E9A', lineHeight: 1.5 }}>
-        Performance position is calculated only from live Starfix activity (bookings, verified reviews and mentor feedback). Website profile fields such as displayed rating and displayed mentee reach are shown separately and are not treated as live performance evidence.
+        Live performance position is calculated only when Starfix has enough live activity (bookings, verified reviews and mentor feedback). The profile-signal position is a separate admin indicator derived from the mentor profile's displayed rating, displayed learner reach and onboarding state; it is not an official Starfix ranking.
       </div>
     </div>
   </Card>
