@@ -1,6 +1,13 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
 import { Card, PageShell } from './shared'
 import { getEcosystem } from './adminBackend'
+import {
+  GrowthPathDropdown,
+  MentorDropdown,
+  isMentorAssociatedWithPath,
+  getMentorPrimaryPath
+} from './growthPathFilter'
+
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 const DAY = 864e5
@@ -311,21 +318,63 @@ function PathCard({ p }: { p: any }) {
 
 export function LivePaths() {
   const { d, err, busy, load } = useEcosystem()
-  const [cat, setCat] = useState('All')
+  const [selectedPath, setSelectedPath] = useState('All Growth Paths')
+  const [q, setQ] = useState('')
   if (!d) return <Loading title="Growth Paths" sub="Live paths, milestones and learner progress." err={err} />
   const m = build(d)
-  const cats = ['All', ...Array.from(new Set<string>(m.paths.map((p: any) => p.category).filter(Boolean)))]
-  const shown = m.paths.filter((p: any) => cat === 'All' || p.category === cat)
+  const cats = Array.from(new Set<string>(m.paths.map((p: any) => p.category).filter(Boolean)))
+  const shown = m.paths.filter((p: any) => {
+    const matchesQuery = (p.title + ' ' + (p.category || '') + ' ' + (p.description || '')).toLowerCase().includes(q.toLowerCase())
+    if (!matchesQuery) return false
+    if (selectedPath === 'All Growth Paths' || selectedPath === 'All') return true
+    return (
+      p.category?.toLowerCase() === selectedPath.toLowerCase() ||
+      p.title?.toLowerCase() === selectedPath.toLowerCase() ||
+      p.title?.toLowerCase().includes(selectedPath.toLowerCase()) ||
+      selectedPath.toLowerCase().includes(p.title?.toLowerCase())
+    )
+  })
   const enrolled = d.progress.length
   return <PageShell title="Growth Paths" subtitle="Every path on Starfix with its milestones, who is enrolled and how far they have progressed." action={<LiveBadge at={d.fetchedAt} busy={busy} load={load} />}>
     <div style={{ ...grid(4), marginBottom: 20 }}>
-      <Kpi label="Growth paths" value={d.paths.length} detail={cats.length - 1 + ' categories'} />
+      <Kpi label="Growth paths" value={d.paths.length} detail={cats.length + ' active categories'} />
       <Kpi label="Milestones" value={d.milestones.length} detail="Structured steps across all paths" />
       <Kpi label="Enrollments" value={enrolled} detail={m.activeIds.size + ' learners active this week'} />
       <Kpi label="Average completion" value={(enrolled ? Math.round(d.progress.reduce((s: number, r: any) => s + num(r.overall_progress), 0) / enrolled) : 0) + '%'} detail={d.progress.filter((r: any) => num(r.overall_progress) >= 100).length + ' paths completed'} />
     </div>
-    <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>{cats.map(c => <Chip key={c} on={cat === c} onClick={() => setCat(c)}>{c}</Chip>)}</div>
-    <div style={grid(2, 18)}>{shown.map((p: any) => <PathCard key={p.id} p={p} />)}</div>
+    <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+      <input
+        value={q}
+        onChange={e => setQ(e.target.value)}
+        placeholder="Search path title or description…"
+        style={{ width: 280, height: 40, padding: '0 12px', border: '1px solid rgba(212,175,55,.22)', borderRadius: 10 }}
+      />
+      <GrowthPathDropdown
+        value={selectedPath}
+        onChange={p => setSelectedPath(p)}
+        label="Filter Growth Path"
+        width={280}
+      />
+      {(selectedPath !== 'All Growth Paths' || q) && (
+        <button
+          onClick={() => { setSelectedPath('All Growth Paths'); setQ('') }}
+          style={{ ...btn, height: 40, color: '#F4D67A', borderColor: 'rgba(212,175,55,0.4)', background: 'rgba(212,175,55,0.08)' }}
+        >
+          ✕ Reset Filter
+        </button>
+      )}
+      <div style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: 12.5, color: dim }}>
+        Showing <b style={{ color: '#F7EFD8' }}>{shown.length}</b> of {m.paths.length} growth paths
+      </div>
+    </div>
+    {shown.length ? (
+      <div style={grid(2, 18)}>{shown.map((p: any) => <PathCard key={p.id} p={p} />)}</div>
+    ) : (
+      <Card style={{ padding: 32, textAlign: 'center' }}>
+        <div style={{ fontSize: 15, fontWeight: 600, color: '#F7EFD8' }}>No growth paths matched the filter.</div>
+        <div style={{ fontSize: 13, color: dim, marginTop: 6 }}>Try clearing your search query or choosing All Growth Paths.</div>
+      </Card>
+    )}
   </PageShell>
 }
 
@@ -474,12 +523,14 @@ function MentorCard({ m }: { m: any }) {
 
 export function LiveMentors() {
   const { d, err, busy, load } = useEcosystem()
-  const [cat, setCat] = useState('All'), [q, setQ] = useState('')
+  const [selectedPath, setSelectedPath] = useState('All Growth Paths')
+  const [q, setQ] = useState('')
   if (!d) return <Loading title="Mentors" sub="Live mentor profiles, skills, availability and mentees." err={err} />
   const m = build(d)
-  const cats = ['All', ...Array.from(new Set<string>(m.mentors.map((x: any) => x.category).filter(Boolean)))]
-  const shown = m.mentors.filter((x: any) => (cat === 'All' || x.category === cat) && (x.name + ' ' + (x.company || '') + ' ' + (x.headline || '') + ' ' + (x.skills || []).join(' ')).toLowerCase().includes(q.toLowerCase()))
-  const rated = m.mentors.filter((x: any) => num(x.rating) > 0)
+  const shown = m.mentors.filter((x: any) =>
+    isMentorAssociatedWithPath(x, selectedPath) &&
+    (x.name + ' ' + (x.company || '') + ' ' + (x.headline || '') + ' ' + (x.skills || []).join(' ')).toLowerCase().includes(q.toLowerCase())
+  )
   return <PageShell title="Mentors" subtitle="Every mentor on Starfix — expertise, ratings, availability, pricing and the learners they guide." action={<LiveBadge at={d.fetchedAt} busy={busy} load={load} />}>
     <div style={{ ...grid(4), marginBottom: 20 }}>
       <Kpi label="Mentor listings" value={m.mentors.length} detail={m.mentors.filter((x: any) => x.profile_id).length + ' registered mentor accounts'} />
@@ -487,51 +538,524 @@ export function LiveMentors() {
       <Kpi label="Registered mentors" value={m.mentors.filter((x: any) => x.profile_id).length} detail={m.mentors.filter((x: any) => x.profile_id && x.onboarding_completed).length + ' completed onboarding'} />
       <Kpi label="Active mentees" value={m.mentors.reduce((s: number, x: any) => s + x.liveMenteeCount, 0)} detail="Unique learners in confirmed/completed bookings" />
     </div>
-    <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
-      <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search name, company or skill…" style={{ width: 300, padding: 10, border: '1px solid rgba(212,175,55,.22)', borderRadius: 8 }} />
-      {cats.map(c => <Chip key={c} on={cat === c} onClick={() => setCat(c)}>{c}</Chip>)}
+    <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+      <input
+        value={q}
+        onChange={e => setQ(e.target.value)}
+        placeholder="Search name, company, or skills…"
+        style={{ width: 280, height: 40, padding: '0 12px', border: '1px solid rgba(212,175,55,.22)', borderRadius: 10 }}
+      />
+      <GrowthPathDropdown
+        value={selectedPath}
+        onChange={p => setSelectedPath(p)}
+        label="Filter by Growth Path"
+        width={280}
+      />
+      {(selectedPath !== 'All Growth Paths' || q) && (
+        <button
+          onClick={() => { setSelectedPath('All Growth Paths'); setQ('') }}
+          style={{ ...btn, height: 40, color: '#F4D67A', borderColor: 'rgba(212,175,55,0.4)', background: 'rgba(212,175,55,0.08)' }}
+        >
+          ✕ Clear Path Filter
+        </button>
+      )}
+      <div style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: 12.5, color: dim }}>
+        Showing <b style={{ color: '#F7EFD8' }}>{shown.length}</b> of {m.mentors.length} mentors
+      </div>
     </div>
     {shown.length ? <div style={grid(2, 18)}>{shown.map((x: any) => <MentorCard key={x.id} m={x} />)}</div> : <Card><Empty>No mentors match this filter.</Empty></Card>}
   </PageShell>
 }
 
-// ── MENTOR–MENTEE ───────────────────────────────────────────────────────────
+// ── MENTOR–MENTEE (Interactive Mentor Reach & Pairings) ──────────────────────
 export function LiveMentorships() {
   const { d, err, busy, load } = useEcosystem()
+  const [selectedPath, setSelectedPath] = useState('All Growth Paths')
+  const [selectedMentorId, setSelectedMentorId] = useState('all')
+
   if (!d) return <Loading title="Mentor–Mentee" sub="Who is learning from whom." err={err} />
   const m = build(d)
-  const paired = m.mentors.filter((x: any) => x.mentees.length)
-  const pairs = paired.reduce((s: number, x: any) => s + x.mentees.length, 0)
-  const sessions = d.bookings.length
-  const ranked = [...m.mentors].sort((a: any, b: any) => num(b.liveMenteeCount) - num(a.liveMenteeCount) || num(b.completed) - num(a.completed))
-  const top = Math.max(1, ...ranked.map((x: any) => num(x.liveMenteeCount)))
-  return <PageShell title="Mentor–Mentee" subtitle="Live pairings from bookings and conversations, plus how many mentees each mentor guides across Starfix." action={<LiveBadge at={d.fetchedAt} busy={busy} load={load} />}>
-    <div style={{ ...grid(4), marginBottom: 20 }}>
-      <Kpi label="Active pairings" value={pairs} detail="Learner–mentor connections" />
-      <Kpi label="Mentors with mentees" value={paired.length} detail={'of ' + m.mentors.length + ' mentors'} />
-      <Kpi label="Sessions" value={sessions} detail={money(m.revenue) + ' booked value'} />
-      <Kpi label="Conversations" value={d.convos.length} detail="Learner–mentor chats started" />
-    </div>
-    <Card style={{ marginBottom: 18 }}>
-      <H title="Live pairings" sub="Each learner who has booked or messaged a mentor" />
-      {paired.length ? paired.map((x: any) => <div key={x.id} style={{ padding: '14px 0', borderTop: '1px solid rgba(212,175,55,.12)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}><Avatar name={x.name} color={x.color} size={36} /><b>{x.name}</b><Tag>{x.category}</Tag></div>
-        {x.mentees.map((e: any) => <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '5px 0 5px 48px' }}>
-          <span>{e.name}</span><span style={{ color: dim }}>{e.sessions} sessions · {money(e.spent)} · {e.convo ? 'chatting · ' : ''}{ago(e.last)}</span>
-        </div>)}
-      </div>) : <Empty>No learner–mentor pairings yet.<br />A pairing appears here the moment a learner books a session or starts a conversation with a mentor.</Empty>}
-    </Card>
-    <Card>
-      <H title="Mentor reach" sub="Active mentees derived from confirmed or completed Starfix bookings" />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {ranked.map((x: any) => <div key={x.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Avatar name={x.name} color={x.color} size={34} />
-          <div style={{ width: 170 }}><div style={{ fontSize: 13, fontWeight: 600 }}>{x.name}</div><div style={{ fontSize: 11, color: dim }}>{x.category}</div></div>
-          <div style={{ flex: 1 }}><Bar pct={(num(x.liveMenteeCount) / top) * 100} h={8} /></div>
-          <div style={{ width: 90, textAlign: 'right', fontSize: 12.5 }}>{num(x.liveMenteeCount).toLocaleString()}</div>
-          <div style={{ width: 50, textAlign: 'right', fontSize: 12.5, color: '#F4D67A' }}>★ {num(x.rating).toFixed(1)}</div>
-        </div>)}
+
+  // 1. Mentors filtered by selected growth path
+  const pathMentors = useMemo(() => {
+    return m.mentors.filter((mentor: any) => isMentorAssociatedWithPath(mentor, selectedPath))
+  }, [m.mentors, selectedPath])
+
+  // 2. Reset mentor selection if previously selected mentor does not belong to new path
+  useEffect(() => {
+    if (selectedMentorId !== 'all') {
+      const stillBelongs = pathMentors.some((mentor: any) => mentor.id === selectedMentorId)
+      if (!stillBelongs) {
+        setSelectedMentorId('all')
+      }
+    }
+  }, [selectedPath, pathMentors, selectedMentorId])
+
+  // 3. Selected mentor object if one is chosen
+  const selectedMentor = useMemo(() => {
+    if (selectedMentorId === 'all') return null
+    return pathMentors.find((mentor: any) => mentor.id === selectedMentorId) || null
+  }, [pathMentors, selectedMentorId])
+
+  // 4. Sorted list for Mentor Reach
+  const rankedMentors = useMemo(() => {
+    const list = selectedMentor ? [selectedMentor] : pathMentors
+    return [...list].sort((a: any, b: any) =>
+      num(b.liveMenteeCount) - num(a.liveMenteeCount) ||
+      num(b.completed) - num(a.completed) ||
+      num(b.rating) - num(a.rating)
+    )
+  }, [selectedMentor, pathMentors])
+
+  const maxMentees = useMemo(() => {
+    return Math.max(1, ...m.mentors.map((x: any) => num(x.liveMenteeCount)))
+  }, [m.mentors])
+
+  // 5. Filtered pairings by path and mentor
+  const filteredPairings = useMemo(() => {
+    return m.mentors
+      .filter((x: any) => x.mentees.length)
+      .filter((x: any) => isMentorAssociatedWithPath(x, selectedPath))
+      .filter((x: any) => selectedMentorId === 'all' || x.id === selectedMentorId)
+  }, [m.mentors, selectedPath, selectedMentorId])
+
+  const pairs = filteredPairings.reduce((s: number, x: any) => s + x.mentees.length, 0)
+  const totalMenteesInFilter = rankedMentors.reduce((s: number, x: any) => s + num(x.liveMenteeCount), 0)
+  const totalSessionsInFilter = rankedMentors.reduce((s: number, x: any) => s + num(x.bookings), 0)
+  const allPairingsCount = m.mentors.filter((x: any) => x.mentees.length).reduce((s: number, x: any) => s + x.mentees.length, 0)
+
+  return (
+    <PageShell
+      title="Mentor–Mentee Operations"
+      subtitle="Interactive mentor analytics, growth path reach, active pairings, and learner progress metrics."
+      action={<LiveBadge at={d.fetchedAt} busy={busy} load={load} />}
+    >
+      {/* Top Overview KPI Row */}
+      <div style={{ ...grid(4), marginBottom: 20 }}>
+        <Kpi label="Active pairings" value={allPairingsCount} detail="Learner–mentor connections across Starfix" />
+        <Kpi label="Mentors with mentees" value={m.mentors.filter((x: any) => x.mentees.length).length} detail={'of ' + m.mentors.length + ' total mentors'} />
+        <Kpi label="Sessions booked" value={d.bookings.length} detail={money(m.revenue) + ' booked value'} />
+        <Kpi label="Conversations" value={d.convos.length} detail="Learner–mentor chats initiated" />
       </div>
-    </Card>
-  </PageShell>
+
+      {/* ── 1. MENTOR REACH SECTION (Interactive Analytics & Growth Path Filter) ── */}
+      <Card style={{ marginBottom: 22, padding: 24 }}>
+        {/* Header & Filter Controls Bar */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 20, paddingBottom: 18, borderBottom: '1px solid rgba(212,175,55,.14)' }}>
+          <div>
+            <div style={{ fontFamily: 'Playfair Display,serif', fontSize: 22, fontWeight: 600, color: '#F7EFD8' }}>
+              Mentor Reach Analytics
+            </div>
+            <div style={{ fontSize: 13, color: dim, marginTop: 4 }}>
+              Filter by Starfix growth path, inspect individual mentor performance, and track live mentee distributions.
+            </div>
+          </div>
+
+          {/* Filter Dropdowns */}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <GrowthPathDropdown
+              value={selectedPath}
+              onChange={path => setSelectedPath(path)}
+              label="Select Growth Path"
+              width={280}
+            />
+
+            <MentorDropdown
+              mentors={pathMentors}
+              selectedMentorId={selectedMentorId}
+              onChange={mentorId => setSelectedMentorId(mentorId)}
+              label="Select Mentor"
+              width={260}
+            />
+
+            {(selectedPath !== 'All Growth Paths' || selectedMentorId !== 'all') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedPath('All Growth Paths')
+                  setSelectedMentorId('all')
+                }}
+                style={{
+                  ...btn,
+                  height: 40,
+                  color: '#F4D67A',
+                  border: '1px solid rgba(212,175,55,0.4)',
+                  background: 'rgba(212,175,55,0.08)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  fontWeight: 600
+                }}
+              >
+                <span>✕</span> Reset Filters
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Filter Status Badge / Scope Summary */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 18, padding: '10px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(212,175,55,0.1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', fontSize: 12.5 }}>
+            <span style={{ color: dim }}>Active Scope:</span>
+            <Tag tone={selectedPath === 'All Growth Paths' ? 'gray' : 'gold'}>
+              Path: {selectedPath}
+            </Tag>
+            {selectedMentor && (
+              <Tag tone="green">
+                Mentor: {selectedMentor.name}
+              </Tag>
+            )}
+            <span style={{ color: dim, marginLeft: 6 }}>
+              {rankedMentors.length} {rankedMentors.length === 1 ? 'mentor' : 'mentors'} displayed
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12 }}>
+            <span style={{ color: dim }}>Combined Reach: <b style={{ color: '#F4D67A', fontFamily: 'Playfair Display,serif', fontSize: 14 }}>{totalMenteesInFilter}</b> mentees</span>
+            <span style={{ color: dim }}>Total Sessions: <b style={{ color: '#F7EFD8' }}>{totalSessionsInFilter}</b></span>
+          </div>
+        </div>
+
+        {/* ── B. INDIVIDUAL MENTOR SPOTLIGHT ANALYTICS VIEW ── */}
+        {selectedMentor ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {/* Spotlight Hero Card */}
+            <div style={{
+              padding: 22,
+              borderRadius: 14,
+              background: 'linear-gradient(160deg, rgba(22,32,72,0.92) 0%, rgba(10,14,35,0.98) 100%)',
+              border: '1px solid rgba(212,175,55,0.35)',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.45), inset 0 1px 0 rgba(212,175,55,0.2)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                  <Avatar name={selectedMentor.name} color={selectedMentor.color} size={64} />
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                      <span style={{ fontFamily: 'Playfair Display,serif', fontSize: 24, fontWeight: 600, color: '#F7EFD8' }}>
+                        {selectedMentor.name}
+                      </span>
+                      <Tag tone="gold">{getMentorPrimaryPath(selectedMentor)}</Tag>
+                      {selectedMentor.category && selectedMentor.category !== getMentorPrimaryPath(selectedMentor) && (
+                        <Tag tone="gray">{selectedMentor.category}</Tag>
+                      )}
+                      <Tag tone={selectedMentor.performanceTone}>{selectedMentor.performance}</Tag>
+                    </div>
+                    <div style={{ fontSize: 13, color: muted, marginTop: 4 }}>
+                      {selectedMentor.headline}{selectedMentor.company ? ' · ' + selectedMentor.company : ''}
+                    </div>
+                    {selectedMentor.skills?.length > 0 && (
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                        {selectedMentor.skills.map((s: string) => (
+                          <span key={s} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.05)', color: '#C8CFE2', border: '1px solid rgba(255,255,255,0.1)' }}>
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedMentorId('all')}
+                  style={{
+                    ...btn,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 7,
+                    color: '#F4D67A',
+                    borderColor: 'rgba(212,175,55,0.3)',
+                    background: 'rgba(212,175,55,0.06)'
+                  }}
+                >
+                  <span>←</span> All Mentors in {selectedPath}
+                </button>
+              </div>
+
+              {/* 4 Spotlight KPI Metrics */}
+              <div style={{ ...grid(4, 12), marginTop: 20 }}>
+                <div style={{ padding: '14px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(212,175,55,0.14)' }}>
+                  <div style={{ fontSize: 11.5, color: dim }}>Active Mentees</div>
+                  <div style={{ fontFamily: 'Playfair Display,serif', fontSize: 26, fontWeight: 600, color: '#F4D67A', marginTop: 4 }}>
+                    {num(selectedMentor.liveMenteeCount).toLocaleString()}
+                  </div>
+                  <div style={{ fontSize: 11, color: muted, marginTop: 3 }}>
+                    Confirmed & completed learners
+                  </div>
+                </div>
+
+                <div style={{ padding: '14px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(212,175,55,0.14)' }}>
+                  <div style={{ fontSize: 11.5, color: dim }}>Bookings & Sessions</div>
+                  <div style={{ fontFamily: 'Playfair Display,serif', fontSize: 26, fontWeight: 600, color: '#F7EFD8', marginTop: 4 }}>
+                    {selectedMentor.completed} <span style={{ fontSize: 14, color: dim, fontWeight: 400 }}>/ {selectedMentor.bookings}</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: muted, marginTop: 3 }}>
+                    {selectedMentor.completionRate !== null ? `${selectedMentor.completionRate}% completion rate` : 'No sessions yet'}
+                  </div>
+                </div>
+
+                <div style={{ padding: '14px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(212,175,55,0.14)' }}>
+                  <div style={{ fontSize: 11.5, color: dim }}>Rating & Satisfaction</div>
+                  <div style={{ fontFamily: 'Playfair Display,serif', fontSize: 26, fontWeight: 600, color: '#F4D67A', marginTop: 4 }}>
+                    ★ {num(selectedMentor.rating).toFixed(1)}
+                  </div>
+                  <div style={{ fontSize: 11, color: muted, marginTop: 3 }}>
+                    {selectedMentor.reviewCount ? `${selectedMentor.reviewCount} verified reviews` : 'Catalog baseline rating'}
+                  </div>
+                </div>
+
+                <div style={{ padding: '14px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(212,175,55,0.14)' }}>
+                  <div style={{ fontSize: 11.5, color: dim }}>Total Booked Value</div>
+                  <div style={{ fontFamily: 'Playfair Display,serif', fontSize: 26, fontWeight: 600, color: '#F7EFD8', marginTop: 4 }}>
+                    {money(num(selectedMentor.revenue))}
+                  </div>
+                  <div style={{ fontSize: 11, color: muted, marginTop: 3 }}>
+                    {selectedMentor.confirmed} confirmed sessions
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Deep-dive Mentee & Activity Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.3fr) minmax(0,1fr)', gap: 16 }}>
+              {/* Active Mentees List */}
+              <div style={{ padding: 18, borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(212,175,55,0.12)' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#F7EFD8', marginBottom: 12 }}>
+                  Active Mentees & Engagements ({selectedMentor.mentees.length})
+                </div>
+                {selectedMentor.mentees.length ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {selectedMentor.mentees.map((e: any) => (
+                      <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#F7EFD8' }}>{e.name}</div>
+                          <div style={{ fontSize: 11.5, color: dim, marginTop: 2 }}>
+                            {e.sessions} {e.sessions === 1 ? 'session' : 'sessions'} · {money(e.spent)} {e.convo ? '· chat active' : ''}
+                          </div>
+                        </div>
+                        <div style={{ fontSize: 11.5, color: dim, textAlign: 'right' }}>
+                          {ago(e.last)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ padding: '24px 12px', textAlign: 'center', color: dim, fontSize: 13 }}>
+                    No active mentees recorded yet for this mentor. Mentee engagements will display automatically once confirmed bookings or chats begin.
+                  </div>
+                )}
+              </div>
+
+              {/* Qualifications & Availability */}
+              <div style={{ padding: 18, borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(212,175,55,0.12)', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#F7EFD8', marginBottom: 6 }}>
+                    Mentorship Approach & Profile
+                  </div>
+                  <div style={{ fontSize: 12.5, color: muted, lineHeight: 1.6 }}>
+                    {selectedMentor.mentoring_approach || selectedMentor.bio || 'Dedicated Starfix mentor guiding learners towards personal and professional mastery.'}
+                  </div>
+                </div>
+
+                <div style={{ borderTop: '1px solid rgba(212,175,55,0.1)', paddingTop: 12 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#D4AF37', marginBottom: 8 }}>Operational Details</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', rowGap: 8, fontSize: 12 }}>
+                    <span style={{ color: dim }}>Availability:</span>
+                    <span><Tag tone={availTone(selectedMentor.availability)}>{selectedMentor.availability || 'Schedule on request'}</Tag></span>
+                    <span style={{ color: dim }}>Pricing:</span>
+                    <span>{selectedMentor.free || selectedMentor.offers_free_intro ? 'Free intro available' : (price(selectedMentor.price) + ' / session')}</span>
+                    <span style={{ color: dim }}>Location:</span>
+                    <span>{selectedMentor.location || 'Remote'}</span>
+                    {selectedMentor.education && (
+                      <>
+                        <span style={{ color: dim }}>Education:</span>
+                        <span>{selectedMentor.education}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* ── C. REFINED MENTOR LIST / TABLE PRESENTATION ── */
+          <div>
+            {rankedMentors.length > 0 ? (
+              <div style={{ overflowX: 'auto', borderRadius: 12, border: '1px solid rgba(212,175,55,0.16)', background: 'rgba(10,14,35,0.5)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(212,175,55,0.07)', borderBottom: '1px solid rgba(212,175,55,0.16)' }}>
+                      <th style={{ ...th, padding: '12px 16px' }}>Mentor</th>
+                      <th style={{ ...th, padding: '12px 16px' }}>Specialization</th>
+                      <th style={{ ...th, padding: '12px 16px', width: 220 }}>Mentee Reach</th>
+                      <th style={{ ...th, padding: '12px 16px' }}>Sessions</th>
+                      <th style={{ ...th, padding: '12px 16px' }}>Rating</th>
+                      <th style={{ ...th, padding: '12px 16px', textAlign: 'right' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rankedMentors.map((x: any) => {
+                      const primaryPath = getMentorPrimaryPath(x)
+                      const reachPct = (num(x.liveMenteeCount) / maxMentees) * 100
+
+                      return (
+                        <tr
+                          key={x.id}
+                          style={{
+                            borderBottom: '1px solid rgba(212,175,55,0.09)',
+                            transition: 'background 140ms ease'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = 'rgba(212,175,55,0.05)'
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = 'transparent'
+                          }}
+                        >
+                          {/* Mentor Column */}
+                          <td style={{ ...td, padding: '14px 16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                              <Avatar name={x.name} color={x.color} size={38} />
+                              <div>
+                                <div style={{ fontSize: 13.5, fontWeight: 600, color: '#F7EFD8' }}>
+                                  {x.name}
+                                </div>
+                                <div style={{ fontSize: 11.5, color: dim, marginTop: 2 }}>
+                                  {x.headline}{x.company ? ' · ' + x.company : ''}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Specialization */}
+                          <td style={{ ...td, padding: '14px 16px' }}>
+                            <Tag tone="gold">{primaryPath}</Tag>
+                            {x.skills?.[0] && (
+                              <span style={{ fontSize: 11, color: dim, marginLeft: 8 }}>
+                                {x.skills.slice(0, 2).join(', ')}
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Mentee Reach + Progress Bar */}
+                          <td style={{ ...td, padding: '14px 16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: '#F4D67A' }}>
+                                {num(x.liveMenteeCount).toLocaleString()} <span style={{ fontSize: 11, color: dim, fontWeight: 400 }}>mentees</span>
+                              </span>
+                              <span style={{ fontSize: 11, color: dim }}>
+                                {Math.round(reachPct)}% share
+                              </span>
+                            </div>
+                            <Bar pct={reachPct} h={6} />
+                          </td>
+
+                          {/* Sessions */}
+                          <td style={{ ...td, padding: '14px 16px' }}>
+                            <div style={{ fontSize: 13, fontWeight: 500, color: '#F7EFD8' }}>
+                              {x.completed} completed
+                            </div>
+                            <div style={{ fontSize: 11, color: dim, marginTop: 2 }}>
+                              {x.bookings} total bookings
+                            </div>
+                          </td>
+
+                          {/* Rating */}
+                          <td style={{ ...td, padding: '14px 16px' }}>
+                            <div style={{ fontSize: 13, color: '#F4D67A', fontWeight: 600 }}>
+                              ★ {num(x.rating).toFixed(1)}
+                            </div>
+                            <div style={{ fontSize: 11, color: dim, marginTop: 2 }}>
+                              {x.reviewCount ? `${x.reviewCount} reviews` : 'Catalog'}
+                            </div>
+                          </td>
+
+                          {/* Action Button */}
+                          <td style={{ ...td, padding: '14px 16px', textAlign: 'right' }}>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedMentorId(x.id)}
+                              style={{
+                                ...btn,
+                                padding: '6px 12px',
+                                fontSize: 12,
+                                color: '#F4D67A',
+                                border: '1px solid rgba(212,175,55,0.3)',
+                                background: 'rgba(212,175,55,0.06)'
+                              }}
+                            >
+                              Inspect →
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div style={{ padding: '36px 16px', textAlign: 'center', borderRadius: 12, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(212,175,55,0.1)' }}>
+                <div style={{ fontSize: 15, color: '#F7EFD8', fontWeight: 600 }}>
+                  No mentors found for "{selectedPath}"
+                </div>
+                <div style={{ fontSize: 13, color: dim, marginTop: 6, maxWidth: 460, margin: '6px auto 16px' }}>
+                  There are currently no mentors associated with this growth path in the database.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPath('All Growth Paths')}
+                  style={{ ...btn, color: '#F4D67A', borderColor: 'rgba(212,175,55,0.4)' }}
+                >
+                  Reset to All Growth Paths
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </Card>
+
+      {/* ── 2. LIVE PAIRINGS SECTION ── */}
+      <Card>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div>
+            <div style={{ fontFamily: 'Playfair Display,serif', fontSize: 20, fontWeight: 600, color: '#F7EFD8' }}>
+              Live Learner–Mentor Pairings
+            </div>
+            <div style={{ fontSize: 12.5, color: dim, marginTop: 3 }}>
+              Each learner who has booked sessions or exchanged messages with a mentor
+            </div>
+          </div>
+          {selectedPath !== 'All Growth Paths' && (
+            <Tag tone="gold">Filtered by {selectedPath}</Tag>
+          )}
+        </div>
+
+        {filteredPairings.length ? (
+          filteredPairings.map((x: any) => (
+            <div key={x.id} style={{ padding: '14px 0', borderTop: '1px solid rgba(212,175,55,.12)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                <Avatar name={x.name} color={x.color} size={36} />
+                <b>{x.name}</b>
+                <Tag>{getMentorPrimaryPath(x)}</Tag>
+              </div>
+              {x.mentees.map((e: any) => (
+                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '5px 0 5px 48px' }}>
+                  <span>{e.name}</span>
+                  <span style={{ color: dim }}>{e.sessions} sessions · {money(e.spent)} · {e.convo ? 'chatting · ' : ''}{ago(e.last)}</span>
+                </div>
+              ))}
+            </div>
+          ))
+        ) : (
+          <Empty>
+            {selectedPath !== 'All Growth Paths'
+              ? `No pairings found for "${selectedPath}". Try selecting All Growth Paths.`
+              : 'No learner–mentor pairings yet. A pairing appears here the moment a learner books a session or starts a conversation.'}
+          </Empty>
+        )}
+      </Card>
+    </PageShell>
+  )
 }
+
