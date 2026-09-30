@@ -482,10 +482,10 @@ export function LiveMentors() {
   const rated = m.mentors.filter((x: any) => num(x.rating) > 0)
   return <PageShell title="Mentors" subtitle="Every mentor on Starfix — expertise, ratings, availability, pricing and the learners they guide." action={<LiveBadge at={d.fetchedAt} busy={busy} load={load} />}>
     <div style={{ ...grid(4), marginBottom: 20 }}>
-      <Kpi label="Mentors" value={m.mentors.length} detail={m.mentors.filter((x: any) => x.onboarding_completed).length + ' fully onboarded'} />
-      <Kpi label="Average rating" value={rated.length ? (rated.reduce((s: number, x: any) => s + num(x.rating), 0) / rated.length).toFixed(2) : '—'} detail="Across all mentor profiles" />
-      <Kpi label="Registered learners" value={m.students.length} detail="Actual student profiles in Starfix" />
-      <Kpi label="Available now" value={m.mentors.filter((x: any) => x.availability === 'Today').length} detail={m.mentors.filter((x: any) => x.availability === 'Tomorrow').length + ' more tomorrow'} />
+      <Kpi label="Mentor listings" value={m.mentors.length} detail={m.mentors.filter((x: any) => x.profile_id).length + ' registered mentor accounts'} />
+      <Kpi label="Verified rating" value={m.mentors.some((x: any) => x.reviewCount) ? (m.mentors.filter((x: any) => x.reviewCount).reduce((s: number, x: any) => s + num(x.reviewAvg), 0) / m.mentors.filter((x: any) => x.reviewCount).length).toFixed(2) : '—'} detail={m.mentors.reduce((s: number, x: any) => s + x.reviewCount, 0) + ' verified reviews'} />
+      <Kpi label="Registered mentors" value={m.mentors.filter((x: any) => x.profile_id).length} detail={m.mentors.filter((x: any) => x.profile_id && x.onboarding_completed).length + ' completed onboarding'} />
+      <Kpi label="Active mentees" value={m.mentors.reduce((s: number, x: any) => s + x.liveMenteeCount, 0)} detail="Unique learners in confirmed/completed bookings" />
     </div>
     <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
       <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search name, company or skill…" style={{ width: 300, padding: 10, border: '1px solid rgba(212,175,55,.22)', borderRadius: 8 }} />
