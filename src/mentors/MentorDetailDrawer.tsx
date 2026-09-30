@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { Card } from '../shared'
 import { getAdminMentorDetail, updateAdminMentor } from '../adminBackend'
 import { getDeviceAccessInfo, buildMentorTimeline, ActivityEvent } from '../lib/userIntelligence'
-import { getMentorPrimaryPath } from '../growthPathFilter'
+import { getMentorPrimaryPath, toSkillsArray } from '../growthPathFilter'
 
 interface MentorDetailDrawerProps {
   mentorId: string | null
@@ -75,7 +75,7 @@ export function MentorDetailDrawer({ mentorId, initialMentor, onClose, onUpdate 
 
   // Profile completion calculation
   const completionFields = [
-    m.name, m.headline, m.bio, m.skills?.length > 0, m.company,
+    m.name, m.headline, m.bio, toSkillsArray(m.skills).length > 0, m.company,
     m.education, m.years_experience, m.price, m.availability, m.mentoring_approach
   ]
   const profileCompletionPct = Math.round((completionFields.filter(Boolean).length / completionFields.length) * 100)
@@ -422,9 +422,9 @@ export function MentorDetailDrawer({ mentorId, initialMentor, onClose, onUpdate 
                     <div style={{ fontSize: 14, fontWeight: 600, color: '#D4AF37', marginBottom: 12 }}>
                       TECHNICAL & MENTORSHIP SKILLS
                     </div>
-                    {m.skills?.length > 0 ? (
+                    {toSkillsArray(m.skills).length > 0 ? (
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        {m.skills.map((s: string) => (
+                        {toSkillsArray(m.skills).map((s: string) => (
                           <span key={s} style={{ padding: '6px 12px', borderRadius: 8, background: 'rgba(212,175,55,0.1)', color: '#F4D67A', border: '1px solid rgba(212,175,55,0.25)', fontSize: 12, fontWeight: 500 }}>
                             {s}
                           </span>

@@ -21,6 +21,8 @@ function Constellation(){
  </svg>
 }
 
+import { ErrorBoundary } from './ErrorBoundary'
+
 function Shell({page,setPage,profile}:{page:Page,setPage:(p:Page)=>void,profile:any}){
  const sections=[['Main',[['overview','Overview','overview'],['users','Learners','users'],['mentors','Mentors','mentors'],['mentorship','Mentor–Mentee','graduationCap'],['bookings','Sessions & Bookings','calendar'],['paths','Growth Paths','paths'],['explore','Explore Content','sparkles'],['messages','Conversations','mail']]],['Insights',[['analytics','Analytics','analytics']]],['System',[['security','Security','shieldCheck'],['settings','Settings','settings']]]] as const
  const name=profile?.full_name||(profile?.email||'').split('@')[0]||'Administrator'
@@ -57,9 +59,23 @@ function Shell({page,setPage,profile}:{page:Page,setPage:(p:Page)=>void,profile:
   <div style={{flex:1,minWidth:0,position:'relative'}}>
    <AdminHeader profile={profile} onMenu={()=>setMenu(true)}/>
    <Constellation/>
-   <main className="sx-main" style={{position:'relative',zIndex:1}}>{page==='overview'&&<LiveOverview/>}{page==='users'&&<LiveUsers/>}{page==='paths'&&<LivePaths/>}{page==='mentors'&&<LiveMentors/>}{page==='mentorship'&&<LiveMentorships/>}{page==='bookings'&&<LiveBookings/>}{page==='explore'&&<LiveExplore/>}{page==='messages'&&<LiveMessages/>}{page==='analytics'&&<LiveAnalytics/>}{page==='security'&&<SecurityPage/>}{page==='settings'&&<SettingsPage/>}</main>
+   <main className="sx-main" style={{position:'relative',zIndex:1}}>
+    <ErrorBoundary fallbackTitle={`Error rendering ${page}`}>
+      {page==='overview'&&<LiveOverview/>}
+      {page==='users'&&<LiveUsers/>}
+      {page==='paths'&&<LivePaths/>}
+      {page==='mentors'&&<LiveMentors/>}
+      {page==='mentorship'&&<LiveMentorships/>}
+      {page==='bookings'&&<LiveBookings/>}
+      {page==='explore'&&<LiveExplore/>}
+      {page==='messages'&&<LiveMessages/>}
+      {page==='analytics'&&<LiveAnalytics/>}
+      {page==='security'&&<SecurityPage/>}
+      {page==='settings'&&<SettingsPage/>}
+    </ErrorBoundary>
+   </main>
   </div>
  </div>
 }
 
-export default function App(){const[profile,setProfile]=useState<any>(null);const[page,setPage]=useState<Page>('overview');useEffect(()=>{requireAdmin().then(r=>setProfile(r.profile))},[]);return <AdminSplash><AdminGate><Shell page={page} setPage={setPage} profile={profile}/></AdminGate></AdminSplash>}
+export default function App(){const[profile,setProfile]=useState<any>(null);const[page,setPage]=useState<Page>('overview');useEffect(()=>{requireAdmin().then(r=>setProfile(r.profile))},[]);return <ErrorBoundary fallbackTitle="Application Error"><AdminSplash><AdminGate><Shell page={page} setPage={setPage} profile={profile}/></AdminGate></AdminSplash></ErrorBoundary>}

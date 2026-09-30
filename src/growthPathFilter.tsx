@@ -210,8 +210,16 @@ const PATH_RULES: Record<string, PathRule> = {
   }
 }
 
+// ── Helper to ensure skills is always an array of trimmed strings ─────────────
+export function toSkillsArray(skills: any): string[] {
+  if (Array.isArray(skills)) return skills.filter(Boolean).map(String)
+  if (typeof skills === 'string') return skills.split(',').map((s: string) => s.trim()).filter(Boolean)
+  return []
+}
+
 // ── Matcher: determines if a mentor is associated with a given path or category ─
 export function isMentorAssociatedWithPath(mentor: any, filterValue: string): boolean {
+  if (!mentor) return false
   if (!filterValue || filterValue === 'All Growth Paths' || filterValue === 'All') {
     return true
   }
@@ -229,7 +237,7 @@ export function isMentorAssociatedWithPath(mentor: any, filterValue: string): bo
   const hl = (mentor.headline || '').toLowerCase()
   const bio = (mentor.bio || '').toLowerCase()
   const approach = (mentor.mentoring_approach || '').toLowerCase()
-  const allSkills = (mentor.skills || []).map((s: string) => s.toLowerCase())
+  const allSkills = toSkillsArray(mentor.skills).map((s: string) => s.toLowerCase())
 
   // Direct match with mentor.growth_path or mentor.path if present
   if (mentor.growth_path && hasWord(mentor.growth_path, filterValue)) return true
@@ -252,12 +260,13 @@ export function isMentorAssociatedWithPath(mentor: any, filterValue: string): bo
 
 // ── Helper to resolve primary growth path title for a mentor ──────────────────
 export function getMentorPrimaryPath(mentor: any): string {
+  if (!mentor) return 'General Mentorship'
   for (const group of STARFIX_PATH_CATEGORIES) {
     for (const path of group.paths) {
       const rule = PATH_RULES[path]
       if (rule) {
         const cat = (mentor.category || '').toLowerCase()
-        const allSkills = (mentor.skills || []).map((s: string) => s.toLowerCase())
+        const allSkills = toSkillsArray(mentor.skills).map((s: string) => s.toLowerCase())
         if (rule.skills.some(rs => allSkills.some((as: string) => hasWord(as, rs)))) return path
         if (rule.categories.some(c => cat === c)) return path
       }
@@ -704,7 +713,7 @@ export function MentorDropdown({
     if (!search.trim()) return mentors
     const q = search.toLowerCase()
     return mentors.filter(m =>
-      (m.name + ' ' + (m.category || '') + ' ' + (m.headline || '')).toLowerCase().includes(q)
+      ((m?.name || '') + ' ' + (m?.category || '') + ' ' + (m?.headline || '')).toLowerCase().includes(q)
     )
   }, [mentors, search])
 
@@ -758,7 +767,7 @@ export function MentorDropdown({
                 flexShrink: 0
               }}
             >
-              {selectedMentor.name.charAt(0)}
+              {(selectedMentor.name || 'M').charAt(0).toUpperCase()}
             </div>
           ) : (
             <span style={{ color: '#8A90AB', fontSize: 13 }}>👥</span>
@@ -772,7 +781,7 @@ export function MentorDropdown({
               fontWeight: isAll ? 400 : 600
             }}
           >
-            {selectedMentor ? selectedMentor.name : 'All Mentors'}
+            {selectedMentor ? (selectedMentor.name || 'Mentor') : 'All Mentors'}
           </span>
         </div>
 
@@ -949,7 +958,7 @@ export function MentorDropdown({
                         flexShrink: 0
                       }}
                     >
-                      {m.name.charAt(0)}
+                      {(m?.name || 'M').charAt(0).toUpperCase()}
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <div
@@ -961,10 +970,10 @@ export function MentorDropdown({
                           whiteSpace: 'nowrap'
                         }}
                       >
-                        {m.name}
+                        {m?.name || 'Mentor'}
                       </div>
                       <div style={{ fontSize: 11, color: '#8A90AB' }}>
-                        {m.category || getMentorPrimaryPath(m)}
+                        {m?.category || getMentorPrimaryPath(m)}
                       </div>
                     </div>
                   </div>

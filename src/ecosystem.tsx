@@ -32,6 +32,11 @@ const grid = (cols: number, gap = 16): React.CSSProperties => ({ display: 'grid'
 const btn: React.CSSProperties = { padding: '8px 13px', border: '1px solid rgba(212,175,55,.22)', borderRadius: 8, background: 'rgba(255,255,255,.05)', cursor: 'pointer', fontSize: 12.5, color: '#F7EFD8' }
 const th: React.CSSProperties = { textAlign: 'left', padding: '14px 13px', fontSize: 11.5, fontWeight: 600, letterSpacing: '.03em', color: '#D4AF37', background: 'rgba(212,175,55,.07)' }
 const td: React.CSSProperties = { padding: 14, borderTop: '1px solid rgba(212,175,55,.12)' }
+function toSkillsArray(skills: any): string[] {
+  if (Array.isArray(skills)) return skills.filter(Boolean).map(String)
+  if (typeof skills === 'string') return skills.split(',').map((s: string) => s.trim()).filter(Boolean)
+  return []
+}
 
 // ── live data hook: fetches on mount, then every 30 seconds ─────────────────
 function useEcosystem() {
@@ -479,7 +484,7 @@ function MentorCard({ m, onInspect }: { m: any; onInspect?: (id: string) => void
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {m.category && <Tag>{m.category}</Tag>}
-        {(m.skills || []).map((s: string) => <Tag key={s} tone="gray">{s}</Tag>)}
+        {toSkillsArray(m.skills).map((s: string) => <Tag key={s} tone="gray">{s}</Tag>)}
         {m.free || m.offers_free_intro ? <Tag tone="green">Free intro</Tag> : null}
         <Tag tone={m.performanceTone}>{m.performance}</Tag>
       </div>
@@ -814,9 +819,9 @@ export function LiveMentorships() {
                     <div style={{ fontSize: 13, color: muted, marginTop: 4 }}>
                       {selectedMentor.headline}{selectedMentor.company ? ' · ' + selectedMentor.company : ''}
                     </div>
-                    {selectedMentor.skills?.length > 0 && (
+                    {toSkillsArray(selectedMentor.skills).length > 0 && (
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-                        {selectedMentor.skills.map((s: string) => (
+                        {toSkillsArray(selectedMentor.skills).map((s: string) => (
                           <span key={s} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.05)', color: '#C8CFE2', border: '1px solid rgba(255,255,255,0.1)' }}>
                             {s}
                           </span>
@@ -1020,9 +1025,9 @@ export function LiveMentorships() {
                           {/* Specialization */}
                           <td style={{ ...td, padding: '14px 16px' }}>
                             <Tag tone="gold">{primaryPath}</Tag>
-                            {x.skills?.[0] && (
+                            {toSkillsArray(x.skills).length > 0 && (
                               <span style={{ fontSize: 11, color: dim, marginLeft: 8 }}>
-                                {x.skills.slice(0, 2).join(', ')}
+                                {toSkillsArray(x.skills).slice(0, 2).join(', ')}
                               </span>
                             )}
                           </td>
