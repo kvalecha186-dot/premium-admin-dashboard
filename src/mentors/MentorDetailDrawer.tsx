@@ -80,27 +80,6 @@ export function MentorDetailDrawer({ mentorId, initialMentor, onClose, onUpdate 
   ]
   const profileCompletionPct = Math.round((completionFields.filter(Boolean).length / completionFields.length) * 100)
 
-  const handleVerifyToggle = () => {
-    const next = !verifiedState
-    setActionConfirm({
-      action: 'verify',
-      title: next ? 'Verify Mentor Account?' : 'Revoke Mentor Verification?',
-      desc: next
-        ? `This will grant ${m.name || 'this mentor'} official verified status on the Starfix public platform.`
-        : `This will mark ${m.name || 'this mentor'} as unverified. They will remain visible in catalog if onboarding is valid.`,
-      onConfirm: async () => {
-        setActionBusy(true)
-        try {
-          await updateAdminMentor(m.id, { onboarding_completed: next })
-          setVerifiedState(next)
-          onUpdate?.()
-        } finally {
-          setActionBusy(false)
-          setActionConfirm(null)
-        }
-      }
-    })
-  }
 
   const handleStatusToggle = () => {
     const next = statusState === 'Suspended' ? 'Active' : 'Suspended'
@@ -270,24 +249,6 @@ export function MentorDetailDrawer({ mentorId, initialMentor, onClose, onUpdate 
 
             {/* Admin Action Buttons */}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={handleVerifyToggle}
-                style={{
-                  padding: '7px 12px',
-                  borderRadius: 8,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: '1px solid rgba(212,175,55,0.35)',
-                  background: verifiedState ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg,#F4D67A,#D4AF37)',
-                  color: verifiedState ? '#F7EFD8' : '#0A0E1F',
-                  transition: 'all 140ms ease'
-                }}
-              >
-                {verifiedState ? 'Revoke Verification' : '✓ Verify Mentor'}
-              </button>
-
               <button
                 type="button"
                 onClick={handleStatusToggle}
