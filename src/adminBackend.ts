@@ -1,9 +1,60 @@
 import {db} from './lib/supabase'
 export type AdminUser={id:string;name:string;email:string;avatar:string|null;country:string|null;goal:string|null;level:string|null;path:string;category:string;streak:number;xp:number;progress:number;lastActive:string|null;status:'Active'|'At risk'|'Inactive'}
-export type AdminMentor={id:string;profileId:string|null;name:string;email:string|null;headline:string|null;company:string|null;category:string|null;rating:number;students:number;availability:string|null;onboarding:boolean;location:string|null}
-export async function getAdminOverview(){const[learners,mentors,bookings,paths,recent,progress]=await Promise.all([db('profiles?select=id&role=eq.student'),db('mentors?select=id'),db('bookings?select=id'),db('growth_paths?select=id'),db('bookings?select=id,status,scheduled_start,amount,mentor_name,session_type&order=created_at.desc&limit=8'),db('user_progress?select=user_id,overall_progress,streak,xp,last_active_date,path_id,growth_paths(title,category)&limit=1000')]);return{learners:learners.length,mentors:mentors.length,bookings:bookings.length,paths:paths.length,activeLearners:progress.filter((p:any)=>p.last_active_date&&Date.parse(p.last_active_date)>=Date.now()-7*86400000).length,completedPaths:progress.filter((p:any)=>Number(p.overall_progress)>=100).length,recentBookings:recent}}
-export async function getAdminUsers():Promise<AdminUser[]>{const[profiles,progress]=await Promise.all([db('profiles?select=id,full_name,email,avatar_url,country,career_goal,goal_title,level,role,created_at&role=eq.student&order=created_at.desc'),db('user_progress?select=user_id,overall_progress,streak,xp,last_active_date,path_id,growth_paths(title,category)&limit=5000')]);const by=new Map<string,any[]>();progress.forEach((p:any)=>by.set(p.user_id,[...(by.get(p.user_id)||[]),p]));return profiles.map((p:any)=>{const rows=by.get(p.id)||[],current=rows[0],last=rows.map(r=>r.last_active_date).filter(Boolean).sort().at(-1)||null,days=last?Math.floor((Date.now()-Date.parse(last))/86400000):999;return{id:p.id,name:p.full_name||'Unnamed learner',email:p.email||'',avatar:p.avatar_url,country:p.country,goal:p.goal_title||p.career_goal,level:p.level,path:current?.growth_paths?.title||'Not enrolled',category:current?.growth_paths?.category||'—',streak:rows.reduce((m,r)=>Math.max(m,Number(r.streak)||0),0),xp:rows.reduce((s,r)=>s+(Number(r.xp)||0),0),progress:rows.length?Math.round(rows.reduce((s,r)=>s+(Number(r.overall_progress)||0),0)/rows.length):0,lastActive:last,status:days<=7?'Active':days<=21?'At risk':'Inactive'}})}
-export async function getAdminMentors():Promise<AdminMentor[]>{const data=await db('mentors?select=id,profile_id,name,email,headline,company,category,rating,students_count,availability,onboarding_completed,location&order=created_at.desc');return data.map((m:any)=>({id:m.id,profileId:m.profile_id,name:m.name||'Unnamed mentor',email:m.email,headline:m.headline,company:m.company,category:m.category,rating:Number(m.rating)||0,students:Number(m.students_count)||0,availability:m.availability,onboarding:!!m.onboarding_completed,location:m.location}))}
+export type AdminMentor={id:string;profileId:string|null;name:string;email:string|null;headline:string|null;company:string|null;category:string|null;rating:number;catalogRating:number;verifiedReviewRating:number|null;students:number;activeMentees:number;reviewCount:number;totalBookings:number;completedSessions:number;availability:string|null;onboarding:boolean;location:string|null;education:string|null;linkedinUrl:string|null;mentorStatus:string;performanceBand:string}
+export async function getAdminOverview(){
+  const [metrics,recent,progress]=await Promise.all([
+    rpc<any[]>('get_admin_overview_metrics'),
+    db('bookings?select=id,status,scheduled_start,amount,mentor_name,session_type&order=created_at.desc&limit=8'),
+    db('user_progress?select=user_id,overall_progress,streak,xp,last_active_date,path_id,growth_paths(title,category)&limit=1000')
+  ]);
+  const m=metrics?.[0]||{};
+  return {
+    learners:Number(m.registered_learners)||0,
+    mentors:Number(m.mentor_listings)||0,
+    registeredMentors:Number(m.registered_mentors)||0,
+    activeMentees:Number(m.active_mentees)||0,
+    bookings:Number(m.total_bookings)||0,
+    completedSessions:Number(m.completed_sessions)||0,
+    reviews:Number(m.verified_reviews)||0,
+    paths:Number(m.growth_paths)||0,
+    progressRecords:Number(m.progress_records)||0,
+    exploreItems:Number(m.explore_items)||0,
+    activeLearners:progress.filter((p:any)=>p.last_active_date&&Date.parse(p.last_active_date)>=Date.now()-7*86400000).length,
+    completedPaths:progress.filter((p:any)=>Number(p.overall_progress)>=100).length,
+    recentBookings:recent
+  }
+}
+export async function getAdminUsers():Promise<AdminUser[]>{
+  const [metrics,progress]=await Promise.all([
+    rpc<any[]>('get_admin_learner_metrics'),
+    db('user_progress?select=user_id,overall_progress,streak,xp,last_active_date,path_id,growth_paths(title,category)&limit=5000')
+  ]);
+  const by=new Map<string,any[]>();
+  progress.forEach((p:any)=>by.set(p.user_id,[...(by.get(p.user_id)||[]),p]));
+  return (metrics||[]).map((p:any)=>{
+    const rows=by.get(p.learner_id)||[];
+    const current=rows[0];
+    return {
+      id:p.learner_id,name:p.name||'Unnamed learner',email:p.email||'',avatar:null,country:p.country,goal:p.career_goal,
+      level:p.level,path:current?.growth_paths?.title||'Not enrolled',category:current?.growth_paths?.category||'—',
+      streak:Number(p.max_streak)||0,xp:Number(p.total_xp)||0,progress:Number(p.average_progress)||0,lastActive:p.last_active_date,
+      status:p.learner_status==='Active'?'Active':p.learner_status==='At risk'?'At risk':'Inactive'
+    };
+  })
+}
+export async function getAdminMentors():Promise<AdminMentor[]>{
+  const data=await rpc<any[]>('get_admin_mentor_metrics');
+  return (data||[]).map((m:any)=>({
+    id:m.mentor_id,profileId:m.profile_id,name:m.name||'Unnamed mentor',email:m.email,headline:m.headline,company:m.company,category:m.category,
+    rating:m.verified_review_rating!==null?Number(m.verified_review_rating):Number(m.catalog_rating)||0,
+    catalogRating:Number(m.catalog_rating)||0,verifiedReviewRating:m.verified_review_rating===null?null:Number(m.verified_review_rating),
+    students:Number(m.active_mentees)||0,activeMentees:Number(m.active_mentees)||0,reviewCount:Number(m.review_count)||0,
+    totalBookings:Number(m.total_bookings)||0,completedSessions:Number(m.completed_sessions)||0,
+    availability:Number(m.future_available_slots)>0?`${Number(m.future_available_slots)} live slots`:null,
+    onboarding:!!m.onboarding_completed,location:m.location,education:m.education,linkedinUrl:m.linkedin_url,
+    mentorStatus:m.mentor_status,performanceBand:m.performance_band
+  }));
+}
 export async function getAdminBookings(){const data=await db('bookings?select=id,student_id,mentor_id,mentor_name,mentor_title,mentor_company,session_type,duration,price,amount,currency,status,scheduled_start,scheduled_end,booking_date,booking_time,notes,created_at&order=scheduled_start.desc&limit=500');return data}
 export async function getAdminExplore(){return db('explore_content?select=id,title,category,content_type,url,metric_value,description,active,created_at,updated_at&order=created_at.desc&limit=500')}
 export async function getAdminConversations(){const [c,m]=await Promise.all([db('conversations?select=id,student_id,mentor_id,archived,created_at&order=created_at.desc&limit=500'),db('messages?select=id,conversation_id,sender,body,status,created_at&order=created_at.desc&limit=1000')]);return c.map((x:any)=>({...x,messages:m.filter((y:any)=>y.conversation_id===x.id).slice(0,5)}))}
