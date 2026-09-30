@@ -78,6 +78,9 @@ function build(d: any) {
     cv.forEach((x: any) => { const e = mm.get(x.student_id) || { id: x.student_id, sessions: 0, spent: 0, last: null, convo: false, feedback: false }; e.convo = true; mm.set(x.student_id, e) })
     fb.forEach((x: any) => { const e = mm.get(x.student_id) || { id: x.student_id, sessions: 0, spent: 0, last: x.created_at, convo: false, feedback: false }; e.feedback = true; mm.set(x.student_id, e) })
     const mentees = [...mm.values()].map(e => ({ ...e, name: nameOf(e.id) }))
+    const liveMenteeCount = new Set(
+      bk.filter((b: any) => ['confirmed','completed'].includes(String(b.status || '').toLowerCase()) && b.student_id).map((b: any) => b.student_id)
+    ).size
     const reviewAvg = rv.length ? rv.reduce((s: number, r: any) => s + num(r.rating), 0) / rv.length : null
     const feedbackAvg = fb.length ? fb.reduce((s: number, r: any) => s + num(r.rating), 0) / fb.length : null
     const completed = bk.filter((b: any) => String(b.status || '').toLowerCase() === 'completed').length
@@ -90,7 +93,7 @@ function build(d: any) {
     let performanceTone = 'gray'
     let performanceScore: number | null = null
     if (performanceSignals >= 2) {
-      performanceScore = Math.round((reviewAvg || feedbackAvg || 0) * 20 * 0.55 + (feedbackAvg || reviewAvg || 0) * 20 * 0.2 + (completionRate ?? 0) * 0.15 + Math.min(100, mentees.length * 10) * 0.1)
+      performanceScore = Math.round((reviewAvg || feedbackAvg || 0) * 20 * 0.55 + (feedbackAvg || reviewAvg || 0) * 20 * 0.2 + (completionRate ?? 0) * 0.15 + Math.min(100, liveMenteeCount * 10) * 0.1)
       performance = performanceScore >= 90 ? 'Exceptional' : performanceScore >= 80 ? 'Strong' : performanceScore >= 65 ? 'Developing' : 'Needs attention'
       performanceTone = performanceScore >= 90 ? 'green' : performanceScore >= 80 ? 'gold' : performanceScore >= 65 ? 'amber' : 'red'
     }
@@ -100,7 +103,7 @@ function build(d: any) {
       goals: gl, earnings: er, sessionTypes: st, availabilitySlots: av,
       followups: fu, sharedResources: sr, notes: nt, scheduleRules: rules, blockedDates: blocked,
       completed, confirmed, cancelled, completionRate, cancellationRate,
-      liveMenteeCount: mentees.length, performance, performanceTone, performanceSignals, performanceScore,
+      liveMenteeCount, performance, performanceTone, performanceSignals, performanceScore,
       profileSignalScore: Math.round(Math.min(100, (num(m.rating) / 5) * 70 + Math.min(1, num(m.students_count) / 3500) * 20 + (m.onboarding_completed ? 10 : 0))),
     }
   })
