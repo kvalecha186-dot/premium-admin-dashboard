@@ -30,6 +30,8 @@ const ago = (v?: string | null) => {
 }
 const grid = (cols: number, gap = 16): React.CSSProperties => ({ display: 'grid', gridTemplateColumns: `repeat(${cols},minmax(0,1fr))`, gap })
 const btn: React.CSSProperties = { padding: '8px 13px', border: '1px solid rgba(212,175,55,.22)', borderRadius: 8, background: 'rgba(255,255,255,.05)', cursor: 'pointer', fontSize: 12.5, color: '#F7EFD8' }
+const th: React.CSSProperties = { textAlign: 'left', padding: '14px 13px', fontSize: 11.5, fontWeight: 600, letterSpacing: '.03em', color: '#D4AF37', background: 'rgba(212,175,55,.07)' }
+const td: React.CSSProperties = { padding: 14, borderTop: '1px solid rgba(212,175,55,.12)' }
 
 // ── live data hook: fetches on mount, then every 30 seconds ─────────────────
 function useEcosystem() {

@@ -239,12 +239,12 @@ export function isMentorAssociatedWithPath(mentor: any, filterValue: string): bo
   const rule = PATH_RULES[filterValue]
   if (rule) {
     if (rule.categories.some(c => cat === c || hasWord(cat, c))) return true
-    if (rule.skills.some(rs => allSkills.some(as => hasWord(as, rs) || hasWord(rs, as)))) return true
+    if (rule.skills.some(rs => allSkills.some((as: string) => hasWord(as, rs) || hasWord(rs, as)))) return true
     if (rule.keywords.some(kw => hasWord(hl, kw) || hasWord(bio, kw) || hasWord(approach, kw))) return true
   }
 
   // Fallback: direct match on filterValue words in skills or category
-  if (allSkills.some(as => hasWord(as, filterValue))) return true
+  if (allSkills.some((as: string) => hasWord(as, filterValue))) return true
   if (hasWord(cat, filterValue)) return true
 
   return false
@@ -258,7 +258,7 @@ export function getMentorPrimaryPath(mentor: any): string {
       if (rule) {
         const cat = (mentor.category || '').toLowerCase()
         const allSkills = (mentor.skills || []).map((s: string) => s.toLowerCase())
-        if (rule.skills.some(rs => allSkills.some(as => hasWord(as, rs)))) return path
+        if (rule.skills.some(rs => allSkills.some((as: string) => hasWord(as, rs)))) return path
         if (rule.categories.some(c => cat === c)) return path
       }
     }
