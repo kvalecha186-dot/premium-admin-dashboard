@@ -1,4 +1,4 @@
-import {db} from './lib/supabase'
+import {db,rpc} from './lib/supabase'
 export type AdminUser={id:string;name:string;email:string;avatar:string|null;country:string|null;goal:string|null;level:string|null;path:string;category:string;streak:number;xp:number;progress:number;lastActive:string|null;status:'Active'|'At risk'|'Inactive'}
 export type AdminMentor={id:string;profileId:string|null;name:string;email:string|null;headline:string|null;company:string|null;category:string|null;rating:number;catalogRating:number;verifiedReviewRating:number|null;students:number;activeMentees:number;reviewCount:number;totalBookings:number;completedSessions:number;availability:string|null;onboarding:boolean;location:string|null;education:string|null;linkedinUrl:string|null;mentorStatus:string;performanceBand:string}
 export async function getAdminOverview(){
@@ -41,6 +41,27 @@ export async function getAdminUsers():Promise<AdminUser[]>{
       status:p.learner_status==='Active'?'Active':p.learner_status==='At risk'?'At risk':'Inactive'
     };
   })
+}
+export async function getAdminMentorDetail(id:string){
+  const [mentorRows,reviews,feedback,bookings,availability,sessionTypes,goals,notes,followups,sharedResources]=await Promise.all([
+    db('mentors?id=eq.'+encodeURIComponent(id)+'&select=*'),
+    db('reviews?mentor_id=eq.'+encodeURIComponent(id)+'&select=*&order=created_at.desc'),
+    db('mentor_feedback?mentor_id=eq.'+encodeURIComponent(id)+'&select=*&order=created_at.desc'),
+    db('bookings?mentor_id=eq.'+encodeURIComponent(id)+'&select=id,student_id,status,scheduled_start,scheduled_end,amount,currency,session_type,duration,notes,created_at&order=scheduled_start.desc'),
+    db('mentor_availability?mentor_id=eq.'+encodeURIComponent(id)+'&select=*&order=start_at.asc'),
+    db('session_types?mentor_id=eq.'+encodeURIComponent(id)+'&select=*&order=created_at.desc'),
+    db('mentor_goals?mentor_id=eq.'+encodeURIComponent(id)+'&select=*&order=created_at.desc'),
+    db('mentor_notes?mentor_id=eq.'+encodeURIComponent(id)+'&select=*&order=created_at.desc'),
+    db('session_followups?mentor_id=eq.'+encodeURIComponent(id)+'&select=*&order=created_at.desc'),
+    db('shared_resources?mentor_id=eq.'+encodeURIComponent(id)+'&select=*&order=created_at.desc')
+  ]);
+  const mentor=mentorRows?.[0]||null;
+  let profile=null;
+  if(mentor?.profile_id){const rows=await db('profiles?id=eq.'+encodeURIComponent(mentor.profile_id)+'&select=id,full_name,email,avatar_url,country,learning_language,learning_languages,created_at');profile=rows?.[0]||null;}
+  const studentIds=[...new Set((bookings||[]).map((b:any)=>b.student_id).filter(Boolean))] as string[];
+  const students=studentIds.length?await db('profiles?id=in.('+studentIds.map(x=>encodeURIComponent(x)).join(',')+')&select=id,full_name,email'):[];
+  const studentMap=new Map((students||[]).map((x:any)=>[x.id,x]));
+  return {mentor,profile,reviews:reviews||[],feedback:feedback||[],availability:availability||[],sessionTypes:sessionTypes||[],goals:goals||[],notes:notes||[],followups:followups||[],sharedResources:sharedResources||[],bookings:(bookings||[]).map((b:any)=>({...b,student:studentMap.get(b.student_id)||null}))};
 }
 export async function getAdminMentors():Promise<AdminMentor[]>{
   const data=await rpc<any[]>('get_admin_mentor_metrics');
