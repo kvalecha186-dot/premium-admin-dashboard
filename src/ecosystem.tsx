@@ -88,10 +88,11 @@ function build(d: any) {
     const performanceSignals = [reviewAvg !== null, fb.length > 0, bk.length > 0].filter(Boolean).length
     let performance = 'Insufficient live data'
     let performanceTone = 'gray'
+    let performanceScore: number | null = null
     if (performanceSignals >= 2) {
-      const score = (reviewAvg || feedbackAvg || 0) * 20 * 0.55 + (feedbackAvg || reviewAvg || 0) * 20 * 0.2 + (completionRate ?? 0) * 0.15 + Math.min(100, mentees.length * 10) * 0.1
-      performance = score >= 90 ? 'Exceptional' : score >= 80 ? 'Strong' : score >= 65 ? 'Developing' : 'Needs attention'
-      performanceTone = score >= 90 ? 'green' : score >= 80 ? 'gold' : score >= 65 ? 'amber' : 'red'
+      performanceScore = Math.round((reviewAvg || feedbackAvg || 0) * 20 * 0.55 + (feedbackAvg || reviewAvg || 0) * 20 * 0.2 + (completionRate ?? 0) * 0.15 + Math.min(100, mentees.length * 10) * 0.1)
+      performance = performanceScore >= 90 ? 'Exceptional' : performanceScore >= 80 ? 'Strong' : performanceScore >= 65 ? 'Developing' : 'Needs attention'
+      performanceTone = performanceScore >= 90 ? 'green' : performanceScore >= 80 ? 'gold' : performanceScore >= 65 ? 'amber' : 'red'
     }
     return {
       ...m, bookings: bk.length, revenue: bk.reduce((s: number, b: any) => s + num(b.amount), 0), mentees, convos: cv.length,
@@ -99,14 +100,18 @@ function build(d: any) {
       goals: gl, earnings: er, sessionTypes: st, availabilitySlots: av,
       followups: fu, sharedResources: sr, notes: nt, scheduleRules: rules, blockedDates: blocked,
       completed, confirmed, cancelled, completionRate, cancellationRate,
-      liveMenteeCount: mentees.length, performance, performanceTone, performanceSignals,
+      liveMenteeCount: mentees.length, performance, performanceTone, performanceSignals, performanceScore,
       profileSignalScore: Math.round(Math.min(100, (num(m.rating) / 5) * 70 + Math.min(1, num(m.students_count) / 3500) * 20 + (m.onboarding_completed ? 10 : 0))),
     }
   })
 
-  const orderedMentors = [...mentors].sort((a: any, b: any) => b.profileSignalScore - a.profileSignalScore || num(b.rating) - num(a.rating) || num(b.students_count) - num(a.students_count))
+  // Only mentors with enough live signals receive a performance position.
+  // Catalog-only profile numbers never create a fake live ranking.
+  const orderedMentors = mentors
+    .filter((x: any) => x.performanceScore !== null)
+    .sort((a: any, b: any) => num(b.performanceScore) - num(a.performanceScore) || num(b.reviewCount) - num(a.reviewCount) || num(b.liveMenteeCount) - num(a.liveMenteeCount))
   const positionById = new Map(orderedMentors.map((x: any, i: number) => [x.id, i + 1]))
-  mentors.forEach((x: any) => { x.profilePosition = positionById.get(x.id) || null; x.profilePositionTotal = mentors.length })
+  mentors.forEach((x: any) => { x.profilePosition = positionById.get(x.id) || null; x.profilePositionTotal = orderedMentors.length })
 
   const live = d.bookings.filter((b: any) => !['cancelled', 'canceled'].includes(String(b.status || '').toLowerCase()))
   return {
@@ -329,7 +334,7 @@ function MentorCard({ m }: { m: any }) {
     ['Sessions', m.bookings],
     ['Reviews', m.reviewCount],
     ['Rating', m.reviewCount ? m.reviewAvg.toFixed(1) + '★' : 'Profile ' + num(m.rating).toFixed(1) + '★'],
-    ['Profile position', m.profilePosition ? '#' + m.profilePosition + ' / ' + m.profilePositionTotal : '—'],
+    ['Live performance position', m.profilePosition ? '#' + m.profilePosition + ' / ' + m.profilePositionTotal : '—'],
   ]
   const info = [
     ['Location', m.location],
@@ -495,8 +500,8 @@ export function LiveMentorships() {
   const paired = m.mentors.filter((x: any) => x.mentees.length)
   const pairs = paired.reduce((s: number, x: any) => s + x.mentees.length, 0)
   const sessions = d.bookings.length
-  const ranked = [...m.mentors].sort((a: any, b: any) => num(b.students_count) - num(a.students_count))
-  const top = Math.max(1, ...ranked.map((x: any) => num(x.students_count)))
+  const ranked = [...m.mentors].sort((a: any, b: any) => num(b.liveMenteeCount) - num(a.liveMenteeCount) || num(b.completed) - num(a.completed))
+  const top = Math.max(1, ...ranked.map((x: any) => num(x.liveMenteeCount)))
   return <PageShell title="Mentor–Mentee" subtitle="Live pairings from bookings and conversations, plus how many mentees each mentor guides across Starfix." action={<LiveBadge at={d.fetchedAt} busy={busy} load={load} />}>
     <div style={{ ...grid(4), marginBottom: 20 }}>
       <Kpi label="Active pairings" value={pairs} detail="Learner–mentor connections" />
@@ -514,13 +519,13 @@ export function LiveMentorships() {
       </div>) : <Empty>No learner–mentor pairings yet.<br />A pairing appears here the moment a learner books a session or starts a conversation with a mentor.</Empty>}
     </Card>
     <Card>
-      <H title="Mentor reach" sub="Mentees each mentor guides across Starfix, as reported on the website" />
+      <H title="Mentor reach" sub="Active mentees derived from confirmed or completed Starfix bookings" />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {ranked.map((x: any) => <div key={x.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Avatar name={x.name} color={x.color} size={34} />
           <div style={{ width: 170 }}><div style={{ fontSize: 13, fontWeight: 600 }}>{x.name}</div><div style={{ fontSize: 11, color: dim }}>{x.category}</div></div>
-          <div style={{ flex: 1 }}><Bar pct={(num(x.students_count) / top) * 100} h={8} /></div>
-          <div style={{ width: 90, textAlign: 'right', fontSize: 12.5 }}>{num(x.students_count).toLocaleString()}</div>
+          <div style={{ flex: 1 }}><Bar pct={(num(x.liveMenteeCount) / top) * 100} h={8} /></div>
+          <div style={{ width: 90, textAlign: 'right', fontSize: 12.5 }}>{num(x.liveMenteeCount).toLocaleString()}</div>
           <div style={{ width: 50, textAlign: 'right', fontSize: 12.5, color: '#F4D67A' }}>★ {num(x.rating).toFixed(1)}</div>
         </div>)}
       </div>
