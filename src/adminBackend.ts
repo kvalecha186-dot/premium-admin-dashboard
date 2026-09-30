@@ -58,7 +58,40 @@ export async function getAdminMentors():Promise<AdminMentor[]>{
 export async function getAdminBookings(){const data=await db('bookings?select=id,student_id,mentor_id,mentor_name,mentor_title,mentor_company,session_type,duration,price,amount,currency,status,scheduled_start,scheduled_end,booking_date,booking_time,notes,created_at&order=scheduled_start.desc&limit=500');return data}
 export async function getAdminExplore(){return db('explore_content?select=id,title,category,content_type,url,metric_value,description,active,created_at,updated_at&order=created_at.desc&limit=500')}
 export async function getAdminConversations(){const [c,m]=await Promise.all([db('conversations?select=id,student_id,mentor_id,archived,created_at&order=created_at.desc&limit=500'),db('messages?select=id,conversation_id,sender,body,status,created_at&order=created_at.desc&limit=1000')]);return c.map((x:any)=>({...x,messages:m.filter((y:any)=>y.conversation_id===x.id).slice(0,5)}))}
-export async function getAdminAnalytics(){const [profiles,progress,bookings,reviews,notifications,saved]=await Promise.all([db('profiles?select=id,role,created_at'),db('user_progress?select=id,user_id,overall_progress,xp,streak,last_active_date'),db('bookings?select=id,status,amount,created_at,scheduled_start'),db('reviews?select=id,rating,created_at'),db('notifications?select=id,created_at'),db('saved_items?select=id,created_at')]);return{students:profiles.filter((x:any)=>x.role==='student').length,mentors:profiles.filter((x:any)=>x.role==='mentor').length,admins:profiles.filter((x:any)=>x.role==='admin').length,progressRecords:progress.length,completed:progress.filter((x:any)=>Number(x.overall_progress)>=100).length,totalXp:progress.reduce((s:any,x:any)=>s+(Number(x.xp)||0),0),avgProgress:progress.length?Math.round(progress.reduce((s:any,x:any)=>s+(Number(x.overall_progress)||0),0)/progress.length):0,active7:progress.filter((x:any)=>x.last_active_date&&Date.parse(x.last_active_date)>=Date.now()-7*86400000).length,bookings:bookings.length,confirmed:bookings.filter((x:any)=>['confirmed','completed'].includes(x.status)).length,revenue:bookings.reduce((s:any,x:any)=>s+(Number(x.amount)||0),0),avgRating:reviews.length?Math.round(reviews.reduce((s:any,x:any)=>s+Number(x.rating||0),0)/reviews.length*10)/10:0,reviews:reviews.length,notifications:notifications.length,saved:saved.length}}
+export async function getAdminAnalytics(){
+  const [overview,profiles,progress,bookings,reviews,notifications,saved]=await Promise.all([
+    rpc<any[]>('get_admin_overview_metrics'),
+    db('profiles?select=id,role,created_at'),
+    db('user_progress?select=id,user_id,overall_progress,xp,streak,last_active_date'),
+    db('bookings?select=id,status,amount,created_at,scheduled_start'),
+    db('reviews?select=id,rating,created_at'),
+    db('notifications?select=id,created_at'),
+    db('saved_items?select=id,created_at')
+  ]);
+  const o=overview?.[0]||{};
+  const studentProgress=progress||[];
+  const bookingRows=bookings||[];
+  const reviewRows=reviews||[];
+  return {
+    students:Number(o.registered_learners)||profiles.filter((x:any)=>x.role==='student').length,
+    mentors:Number(o.registered_mentors)||0,
+    mentorListings:Number(o.mentor_listings)||0,
+    activeMentees:Number(o.active_mentees)||0,
+    admins:profiles.filter((x:any)=>x.role==='admin').length,
+    progressRecords:studentProgress.length,
+    completed:studentProgress.filter((x:any)=>Number(x.overall_progress)>=100).length,
+    totalXp:studentProgress.reduce((s:number,x:any)=>s+(Number(x.xp)||0),0),
+    avgProgress:studentProgress.length?Math.round(studentProgress.reduce((s:number,x:any)=>s+(Number(x.overall_progress)||0),0)/studentProgress.length):0,
+    active7:studentProgress.filter((x:any)=>x.last_active_date&&Date.parse(x.last_active_date)>=Date.now()-7*86400000).length,
+    bookings:bookingRows.length,
+    confirmed:bookingRows.filter((x:any)=>['confirmed','completed'].includes(x.status)).length,
+    revenue:bookingRows.reduce((s:number,x:any)=>s+(Number(x.amount)||0),0),
+    avgRating:reviewRows.length?Math.round(reviewRows.reduce((s:number,x:any)=>s+Number(x.rating||0),0)/reviewRows.length*10)/10:0,
+    reviews:reviewRows.length,
+    notifications:notifications.length,
+    saved:saved.length
+  }
+}
 export async function getAdminPaths(){const[paths,milestones,progress]=await Promise.all([db('growth_paths?select=*&order=created_at.desc'),db('milestones?select=id,path_id'),db('user_progress?select=path_id,overall_progress&limit=5000')]);return paths.map((p:any)=>{const enrolled=progress.filter((r:any)=>r.path_id===p.id);return{...p,milestoneCount:milestones.filter((m:any)=>m.path_id===p.id).length,liveLearners:enrolled.length,completion:enrolled.length?Math.round(enrolled.reduce((s:any,r:any)=>s+(Number(r.overall_progress)||0),0)/enrolled.length):0}})}
 
 
