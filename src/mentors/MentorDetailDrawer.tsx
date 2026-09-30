@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Card } from '../shared'
 import { getAdminMentorDetail, updateAdminMentor } from '../adminBackend'
 import { getDeviceAccessInfo, buildMentorTimeline, ActivityEvent } from '../lib/userIntelligence'
@@ -6,19 +7,29 @@ import { getMentorPrimaryPath } from '../growthPathFilter'
 
 interface MentorDetailDrawerProps {
   mentorId: string | null
+  initialMentor?: any
   onClose: () => void
   onUpdate?: () => void
 }
 
-export function MentorDetailDrawer({ mentorId, onClose, onUpdate }: MentorDetailDrawerProps) {
+export function MentorDetailDrawer({ mentorId, initialMentor, onClose, onUpdate }: MentorDetailDrawerProps) {
   const [tab, setTab] = useState<'overview' | 'professional' | 'mentoring' | 'activity' | 'access' | 'sessions'>('overview')
   const [loading, setLoading] = useState(true)
   const [detail, setDetail] = useState<any>(null)
   const [error, setError] = useState('')
   const [actionConfirm, setActionConfirm] = useState<{ action: string; title: string; desc: string; onConfirm: () => Promise<void> } | null>(null)
   const [actionBusy, setActionBusy] = useState(false)
-  const [verifiedState, setVerifiedState] = useState<boolean>(false)
-  const [statusState, setStatusState] = useState<string>('Active')
+  const [verifiedState, setVerifiedState] = useState<boolean>(!!initialMentor?.onboarding_completed || !!initialMentor?.onboarding)
+  const [statusState, setStatusState] = useState<string>(initialMentor?.mentor_status || 'Active')
+
+  // Lock body scroll while drawer is open
+  useEffect(() => {
+    const original = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = original
+    }
+  }, [])
 
   useEffect(() => {
     if (!mentorId) return
@@ -45,11 +56,11 @@ export function MentorDetailDrawer({ mentorId, onClose, onUpdate }: MentorDetail
 
   if (!mentorId) return null
 
-  const m = detail?.mentor || {}
+  const m = detail?.mentor || initialMentor || {}
   const profile = detail?.profile || {}
-  const bookings = detail?.bookings || []
-  const reviews = detail?.reviews || []
-  const feedback = detail?.feedback || []
+  const bookings = detail?.bookings || (Array.isArray(initialMentor?.bookings) ? initialMentor.bookings : [])
+  const reviews = detail?.reviews || (Array.isArray(initialMentor?.reviews) ? initialMentor.reviews : [])
+  const feedback = detail?.feedback || (Array.isArray(initialMentor?.feedback) ? initialMentor.feedback : [])
 
   const deviceAccess = getDeviceAccessInfo(m.id || mentorId, m.created_at, profile.country, m.location)
   const timeline: ActivityEvent[] = buildMentorTimeline(m, detail)
@@ -113,15 +124,15 @@ export function MentorDetailDrawer({ mentorId, onClose, onUpdate }: MentorDetail
     })
   }
 
-  return (
+  return createPortal(
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9999,
+        zIndex: 100000,
         display: 'flex',
         justifyContent: 'flex-end',
-        background: 'rgba(3, 5, 15, 0.78)',
+        background: 'rgba(3, 5, 15, 0.85)',
         backdropFilter: 'blur(8px)',
         animation: 'fadeIn 200ms ease-out'
       }}
@@ -130,8 +141,8 @@ export function MentorDetailDrawer({ mentorId, onClose, onUpdate }: MentorDetail
       {/* Drawer Container */}
       <div
         style={{
-          width: 820,
-          maxWidth: '92vw',
+          width: 860,
+          maxWidth: '96vw',
           height: '100vh',
           background: 'linear-gradient(180deg, #090F2C 0%, #050818 100%)',
           borderLeft: '1px solid rgba(212,175,55,0.28)',
@@ -734,6 +745,7 @@ export function MentorDetailDrawer({ mentorId, onClose, onUpdate }: MentorDetail
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   )
 }

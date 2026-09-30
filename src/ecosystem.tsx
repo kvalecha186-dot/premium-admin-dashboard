@@ -626,6 +626,7 @@ export function LiveMentors() {
     {selectedMentorId && (
       <MentorDetailDrawer
         mentorId={selectedMentorId}
+        initialMentor={m.mentors.find((x: any) => x.id === selectedMentorId)}
         onClose={() => setSelectedMentorId(null)}
         onUpdate={load}
       />
@@ -1163,6 +1164,7 @@ export function LiveMentorships() {
       {drawerMentorId && (
         <MentorDetailDrawer
           mentorId={drawerMentorId}
+          initialMentor={m?.mentors?.find((x: any) => x.id === drawerMentorId)}
           onClose={() => setDrawerMentorId(null)}
           onUpdate={load}
         />

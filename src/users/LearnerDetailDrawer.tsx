@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Card } from '../shared'
 import { getAdminLearnerDetail, updateAdminProfile } from '../adminBackend'
 import { getDeviceAccessInfo, buildLearnerTimeline, ActivityEvent } from '../lib/userIntelligence'
@@ -18,6 +19,15 @@ export function LearnerDetailDrawer({ learnerId, initialUser, onClose, onUpdate 
   const [statusState, setStatusState] = useState<string>(initialUser?.status || 'Active')
   const [actionConfirm, setActionConfirm] = useState<{ action: string; title: string; desc: string; onConfirm: () => Promise<void> } | null>(null)
   const [actionBusy, setActionBusy] = useState(false)
+
+  // Lock body scroll while drawer is open
+  useEffect(() => {
+    const original = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = original
+    }
+  }, [])
 
   useEffect(() => {
     if (!learnerId) return
@@ -93,15 +103,15 @@ export function LearnerDetailDrawer({ learnerId, initialUser, onClose, onUpdate 
     })
   }
 
-  return (
+  return createPortal(
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9999,
+        zIndex: 100000,
         display: 'flex',
         justifyContent: 'flex-end',
-        background: 'rgba(3, 5, 15, 0.78)',
+        background: 'rgba(3, 5, 15, 0.85)',
         backdropFilter: 'blur(8px)',
         animation: 'fadeIn 200ms ease-out'
       }}
@@ -637,6 +647,7 @@ export function LearnerDetailDrawer({ learnerId, initialUser, onClose, onUpdate 
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   )
 }
