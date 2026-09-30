@@ -644,11 +644,15 @@ export function LiveMentors() {
 // ── MENTOR–MENTEE (Interactive Mentor Reach & Pairings) ──────────────────────
 export function LiveMentorships() {
   const { d, err, busy, load } = useEcosystem()
+  if (!d) return <Loading title="Mentor–Mentee" sub="Who is learning from whom." err={err} />
+  return <LiveMentorshipsContent d={d} err={err} busy={busy} load={load} />
+}
+
+function LiveMentorshipsContent({ d, err: _err, busy, load }: any) {
   const [selectedPath, setSelectedPath] = useState('All Growth Paths')
   const [selectedMentorId, setSelectedMentorId] = useState('all')
   const [drawerMentorId, setDrawerMentorId] = useState<string | null>(null)
 
-  if (!d) return <Loading title="Mentor–Mentee" sub="Who is learning from whom." err={err} />
   const m = build(d)
 
   // 1. Mentors filtered by selected growth path
