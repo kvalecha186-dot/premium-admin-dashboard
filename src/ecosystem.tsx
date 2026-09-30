@@ -7,6 +7,9 @@ import {
   isMentorAssociatedWithPath,
   getMentorPrimaryPath
 } from './growthPathFilter'
+import { MentorDetailDrawer } from './mentors/MentorDetailDrawer'
+import { GeographyAnalyticsView } from './analytics/GeographyAnalyticsView'
+import { UserActivityView } from './analytics/UserActivityView'
 
 
 // ── helpers ─────────────────────────────────────────────────────────────────
@@ -183,6 +186,8 @@ const availTone = (a?: string) => a === 'Today' ? 'green' : a === 'Tomorrow' ? '
 // ── OVERVIEW ────────────────────────────────────────────────────────────────
 export function LiveOverview() {
   const { d, err, busy, load } = useEcosystem()
+  const [viewMode, setViewMode] = useState<'overview' | 'geography' | 'activity'>('overview')
+
   if (!d) return <Loading title="Starfix Overview" sub="Live operational data from the Starfix database." err={err} />
   const m = build(d)
   const topMentors = [...m.mentors].sort((a: any, b: any) => num(b.liveMenteeCount) - num(a.liveMenteeCount) || num(b.rating) - num(a.rating)).slice(0, 5)
@@ -190,81 +195,111 @@ export function LiveOverview() {
   const pathOf = (uid: string) => { const r = d.progress.find((x: any) => x.user_id === uid); return r ? { title: d.paths.find((p: any) => p.id === r.path_id)?.title || '—', pct: Math.round(num(r.overall_progress)) } : null }
 
   return <PageShell title="Starfix Overview" subtitle="Everything happening on Starfix right now — learners, mentors, growth paths and sessions, straight from the live database." action={<LiveBadge at={d.fetchedAt} busy={busy} load={load} />}>
-    <div style={{ ...grid(4), marginBottom: 20 }}>
-      <Kpi label="Learners" value={m.students.length} detail={m.activeIds.size + ' active in the last 7 days'} />
-      <Kpi label="Mentors" value={d.mentors.length} detail={m.mentors.filter((x: any) => x.onboarding_completed).length + ' fully onboarded'} />
-      <Kpi label="Growth paths" value={d.paths.length} detail={d.milestones.length + ' milestones across all paths'} />
-      <Kpi label="Sessions booked" value={d.bookings.length} detail={money(m.revenue) + ' booked value'} />
+    <div style={{ display: 'flex', gap: 6, marginBottom: 22, borderBottom: '1px solid rgba(212,175,55,0.16)', paddingBottom: 12 }}>
+      {[
+        { id: 'overview', label: '✦ Ecosystem Overview' },
+        { id: 'geography', label: '🌍 User Geography' },
+        { id: 'activity', label: '⚡ User Activity & Engagement' }
+      ].map(tab => (
+        <button
+          key={tab.id}
+          onClick={() => setViewMode(tab.id as any)}
+          style={{
+            ...btn,
+            padding: '8px 16px',
+            fontWeight: viewMode === tab.id ? 600 : 400,
+            color: viewMode === tab.id ? '#070A1A' : '#9AA0BA',
+            background: viewMode === tab.id ? 'linear-gradient(135deg, #F4D67A, #D4AF37)' : 'rgba(255,255,255,0.04)',
+            borderColor: viewMode === tab.id ? 'transparent' : 'rgba(212,175,55,0.18)'
+          }}
+        >
+          {tab.label}
+        </button>
+      ))}
     </div>
 
-    <div style={{ ...grid(4), marginBottom: 16 }}>
-      <Kpi label="Progress records" value={d.progress.length} detail={d.milestoneProgress.length + ' milestone-level records'} />
-      <Kpi label="Saved resources" value={d.savedItems.length} detail={d.watchQueue.length + ' items in learner watch queues'} />
-      <Kpi label="XP transactions" value={d.xpTransactions.length} detail="Real learner activity events" />
-      <Kpi label="Notifications" value={d.notifications.length} detail="Stored Starfix notifications" />
-    </div>
+    {viewMode === 'geography' && <GeographyAnalyticsView ecosystem={d} />}
+    {viewMode === 'activity' && <UserActivityView ecosystem={d} />}
 
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.25fr) minmax(0,1fr)', gap: 16, marginBottom: 16 }}>
-      <Card>
-        <H title="Growth path momentum" sub="Learners enrolled and average completion on every path" />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {pathRows.map((p: any) => <div key={p.id}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7, gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                <b style={{ fontSize: 13.5 }}>{p.title}</b><Tag tone="gray">{p.category}</Tag>
-              </div>
-              <span style={{ fontSize: 12, color: muted, whiteSpace: 'nowrap' }}>{p.enrolled} enrolled · {p.avg}%</span>
-            </div>
-            <Bar pct={p.avg} />
-          </div>)}
-          {!pathRows.length && <Empty>No growth paths found.</Empty>}
+    {viewMode === 'overview' && (
+      <>
+        <div style={{ ...grid(4), marginBottom: 20 }}>
+          <Kpi label="Learners" value={m.students.length} detail={m.activeIds.size + ' active in the last 7 days'} />
+          <Kpi label="Mentors" value={d.mentors.length} detail={m.mentors.filter((x: any) => x.onboarding_completed).length + ' fully onboarded'} />
+          <Kpi label="Growth paths" value={d.paths.length} detail={d.milestones.length + ' milestones across all paths'} />
+          <Kpi label="Sessions booked" value={d.bookings.length} detail={money(m.revenue) + ' booked value'} />
         </div>
-      </Card>
-      <Card>
-        <H title="Mentor spotlight" sub="Most-followed mentors on Starfix" />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {topMentors.map((x: any) => <div key={x.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Avatar name={x.name} color={x.color} size={40} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 600 }}>{x.name}</div>
-              <div style={{ fontSize: 11.5, color: dim, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{x.headline}{x.company ? ' · ' + x.company : ''}</div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 13, color: '#F4D67A' }}>★ {num(x.rating).toFixed(1)}</div>
-              <div style={{ fontSize: 11, color: dim }}>{num(x.liveMenteeCount).toLocaleString()} live mentees</div>
-            </div>
-          </div>)}
-        </div>
-      </Card>
-    </div>
 
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.25fr) minmax(0,1fr)', gap: 16 }}>
-      <Card>
-        <H title="Newest learners" sub="Latest people to join Starfix" />
-        {m.students.length ? <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {m.students.slice(0, 6).map((s: any) => { const pr = pathOf(s.id); return <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Avatar name={s.full_name || s.email || '?'} size={38} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 600 }}>{s.full_name || 'Unnamed learner'}</div>
-              <div style={{ fontSize: 11.5, color: dim }}>{s.goal_title || s.career_goal || s.email}</div>
+        <div style={{ ...grid(4), marginBottom: 16 }}>
+          <Kpi label="Progress records" value={d.progress.length} detail={d.milestoneProgress.length + ' milestone-level records'} />
+          <Kpi label="Saved resources" value={d.savedItems.length} detail={d.watchQueue.length + ' items in learner watch queues'} />
+          <Kpi label="XP transactions" value={d.xpTransactions.length} detail="Real learner activity events" />
+          <Kpi label="Notifications" value={d.notifications.length} detail="Stored Starfix notifications" />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.25fr) minmax(0,1fr)', gap: 16, marginBottom: 16 }}>
+          <Card>
+            <H title="Growth path momentum" sub="Learners enrolled and average completion on every path" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {pathRows.map((p: any) => <div key={p.id}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7, gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                    <b style={{ fontSize: 13.5 }}>{p.title}</b><Tag tone="gray">{p.category}</Tag>
+                  </div>
+                  <span style={{ fontSize: 12, color: muted, whiteSpace: 'nowrap' }}>{p.enrolled} enrolled · {p.avg}%</span>
+                </div>
+                <Bar pct={p.avg} />
+              </div>)}
+              {!pathRows.length && <Empty>No growth paths found.</Empty>}
             </div>
-            <div style={{ width: 150 }}>
-              {pr ? <><div style={{ fontSize: 11.5, color: muted, marginBottom: 5 }}>{pr.title} · {pr.pct}%</div><Bar pct={pr.pct} /></> : <span style={{ fontSize: 11.5, color: dim }}>Not enrolled yet</span>}
+          </Card>
+          <Card>
+            <H title="Mentor spotlight" sub="Most-followed mentors on Starfix" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {topMentors.map((x: any) => <div key={x.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Avatar name={x.name} color={x.color} size={40} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>{x.name}</div>
+                  <div style={{ fontSize: 11.5, color: dim, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{x.headline}{x.company ? ' · ' + x.company : ''}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 13, color: '#F4D67A' }}>★ {num(x.rating).toFixed(1)}</div>
+                  <div style={{ fontSize: 11, color: dim }}>{num(x.liveMenteeCount).toLocaleString()} live mentees</div>
+                </div>
+              </div>)}
             </div>
-            <div style={{ fontSize: 11.5, color: dim, width: 70, textAlign: 'right' }}>{ago(s.created_at)}</div>
-          </div> })}
-        </div> : <Empty>No learners have signed up yet.</Empty>}
-      </Card>
-      <Card>
-        <H title="Recent sessions" sub="Latest mentor bookings" />
-        {d.bookings.length ? <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {d.bookings.slice(0, 5).map((b: any) => <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-            <div><div style={{ fontSize: 13.5, fontWeight: 600 }}>{b.mentor_name || 'Mentor'}</div><div style={{ fontSize: 11.5, color: dim }}>{b.session_type || 'Mentoring session'} · {ago(b.created_at)}</div></div>
-            <div style={{ textAlign: 'right' }}><div style={{ fontSize: 13 }}>{money(num(b.amount))}</div><Tag tone={/confirm|complet/i.test(b.status || '') ? 'green' : /cancel/i.test(b.status || '') ? 'red' : 'amber'}>{b.status || '—'}</Tag></div>
-          </div>)}
-        </div> : <Empty>No sessions booked yet.<br />New bookings appear here automatically.</Empty>}
-      </Card>
-    </div>
+          </Card>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.25fr) minmax(0,1fr)', gap: 16 }}>
+          <Card>
+            <H title="Newest learners" sub="Latest people to join Starfix" />
+            {m.students.length ? <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {m.students.slice(0, 6).map((s: any) => { const pr = pathOf(s.id); return <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Avatar name={s.full_name || s.email || '?'} size={38} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>{s.full_name || 'Unnamed learner'}</div>
+                  <div style={{ fontSize: 11.5, color: dim }}>{s.goal_title || s.career_goal || s.email}</div>
+                </div>
+                <div style={{ width: 150 }}>
+                  {pr ? <><div style={{ fontSize: 11.5, color: muted, marginBottom: 5 }}>{pr.title} · {pr.pct}%</div><Bar pct={pr.pct} /></> : <span style={{ fontSize: 11.5, color: dim }}>Not enrolled yet</span>}
+                </div>
+                <div style={{ fontSize: 11.5, color: dim, width: 70, textAlign: 'right' }}>{ago(s.created_at)}</div>
+              </div> })}
+            </div> : <Empty>No learners have signed up yet.</Empty>}
+          </Card>
+          <Card>
+            <H title="Recent sessions" sub="Latest mentor bookings" />
+            {d.bookings.length ? <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {d.bookings.slice(0, 5).map((b: any) => <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                <div><div style={{ fontSize: 13.5, fontWeight: 600 }}>{b.mentor_name || 'Mentor'}</div><div style={{ fontSize: 11.5, color: dim }}>{b.session_type || 'Mentoring session'} · {ago(b.created_at)}</div></div>
+                <div style={{ textAlign: 'right' }}><div style={{ fontSize: 13 }}>{money(num(b.amount))}</div><Tag tone={/confirm|complet/i.test(b.status || '') ? 'green' : /cancel/i.test(b.status || '') ? 'red' : 'amber'}>{b.status || '—'}</Tag></div>
+              </div>)}
+            </div> : <Empty>No sessions booked yet.<br />New bookings appear here automatically.</Empty>}
+          </Card>
+        </div>
+      </>
+    )}
   </PageShell>
 }
 
@@ -379,7 +414,7 @@ export function LivePaths() {
 }
 
 // ── MENTORS ─────────────────────────────────────────────────────────────────
-function MentorCard({ m }: { m: any }) {
+function MentorCard({ m, onInspect }: { m: any; onInspect?: (id: string) => void }) {
   const [open, setOpen] = useState(false)
   const rows = [
     ['Live mentees', m.liveMenteeCount],
@@ -402,15 +437,36 @@ function MentorCard({ m }: { m: any }) {
       <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
         <Avatar name={m.name} color={m.color} size={54} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <button
-            onClick={() => setOpen(!open)}
-            style={{ border: 0, padding: 0, background: 'transparent', cursor: 'pointer', color: '#F7EFD8', textAlign: 'left', fontFamily: 'Playfair Display,serif', fontSize: 20, fontWeight: 600 }}
-          >
-            {m.name}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => onInspect ? onInspect(m.id) : setOpen(!open)}
+              style={{ border: 0, padding: 0, background: 'transparent', cursor: 'pointer', color: '#F7EFD8', textAlign: 'left', fontFamily: 'Playfair Display,serif', fontSize: 20, fontWeight: 600 }}
+              title="Click to open deep admin profile view"
+            >
+              {m.name}
+            </button>
+            {onInspect && (
+              <button
+                type="button"
+                onClick={() => onInspect(m.id)}
+                style={{
+                  padding: '3px 8px',
+                  borderRadius: 6,
+                  border: '1px solid rgba(212,175,55,0.35)',
+                  background: 'rgba(212,175,55,0.08)',
+                  color: '#F4D67A',
+                  fontSize: 11,
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                Deep Profile ↗
+              </button>
+            )}
+          </div>
           <div style={{ fontSize: 12.5, color: muted }}>{m.headline}{m.company ? ' · ' + m.company : ''}</div>
           <div style={{ fontSize: 11, color: dim, marginTop: 4 }}>
-            {open ? 'Click name to collapse profile' : 'Click name to view full profile, qualifications and reviews'}
+            Click name to open deep admin profile (qualifications, sessions, device access & timeline)
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
@@ -525,6 +581,8 @@ export function LiveMentors() {
   const { d, err, busy, load } = useEcosystem()
   const [selectedPath, setSelectedPath] = useState('All Growth Paths')
   const [q, setQ] = useState('')
+  const [selectedMentorId, setSelectedMentorId] = useState<string | null>(null)
+
   if (!d) return <Loading title="Mentors" sub="Live mentor profiles, skills, availability and mentees." err={err} />
   const m = build(d)
   const shown = m.mentors.filter((x: any) =>
@@ -563,7 +621,15 @@ export function LiveMentors() {
         Showing <b style={{ color: '#F7EFD8' }}>{shown.length}</b> of {m.mentors.length} mentors
       </div>
     </div>
-    {shown.length ? <div style={grid(2, 18)}>{shown.map((x: any) => <MentorCard key={x.id} m={x} />)}</div> : <Card><Empty>No mentors match this filter.</Empty></Card>}
+    {shown.length ? <div style={grid(2, 18)}>{shown.map((x: any) => <MentorCard key={x.id} m={x} onInspect={setSelectedMentorId} />)}</div> : <Card><Empty>No mentors match this filter.</Empty></Card>}
+
+    {selectedMentorId && (
+      <MentorDetailDrawer
+        mentorId={selectedMentorId}
+        onClose={() => setSelectedMentorId(null)}
+        onUpdate={load}
+      />
+    )}
   </PageShell>
 }
 
@@ -572,6 +638,7 @@ export function LiveMentorships() {
   const { d, err, busy, load } = useEcosystem()
   const [selectedPath, setSelectedPath] = useState('All Growth Paths')
   const [selectedMentorId, setSelectedMentorId] = useState('all')
+  const [drawerMentorId, setDrawerMentorId] = useState<string | null>(null)
 
   if (!d) return <Loading title="Mentor–Mentee" sub="Who is learning from whom." err={err} />
   const m = build(d)
@@ -756,21 +823,40 @@ export function LiveMentorships() {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setSelectedMentorId('all')}
-                  style={{
-                    ...btn,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 7,
-                    color: '#F4D67A',
-                    borderColor: 'rgba(212,175,55,0.3)',
-                    background: 'rgba(212,175,55,0.06)'
-                  }}
-                >
-                  <span>←</span> All Mentors in {selectedPath}
-                </button>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => setDrawerMentorId(selectedMentor.id)}
+                    style={{
+                      ...btn,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 7,
+                      color: '#070A1A',
+                      background: 'linear-gradient(135deg, #F4D67A, #D4AF37)',
+                      fontWeight: 600,
+                      border: 0,
+                      boxShadow: '0 0 14px rgba(212,175,55,0.3)'
+                    }}
+                  >
+                    Deep Admin Profile ↗
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMentorId('all')}
+                    style={{
+                      ...btn,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 7,
+                      color: '#F4D67A',
+                      borderColor: 'rgba(212,175,55,0.3)',
+                      background: 'rgba(212,175,55,0.06)'
+                    }}
+                  >
+                    <span>←</span> All Mentors in {selectedPath}
+                  </button>
+                </div>
               </div>
 
               {/* 4 Spotlight KPI Metrics */}
@@ -973,20 +1059,38 @@ export function LiveMentorships() {
 
                           {/* Action Button */}
                           <td style={{ ...td, padding: '14px 16px', textAlign: 'right' }}>
-                            <button
-                              type="button"
-                              onClick={() => setSelectedMentorId(x.id)}
-                              style={{
-                                ...btn,
-                                padding: '6px 12px',
-                                fontSize: 12,
-                                color: '#F4D67A',
-                                border: '1px solid rgba(212,175,55,0.3)',
-                                background: 'rgba(212,175,55,0.06)'
-                              }}
-                            >
-                              Inspect →
-                            </button>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedMentorId(x.id)}
+                                style={{
+                                  ...btn,
+                                  padding: '5px 10px',
+                                  fontSize: 11.5,
+                                  color: '#F7EFD8',
+                                  border: '1px solid rgba(255,255,255,0.12)'
+                                }}
+                                title="Inspect in spotlight view"
+                              >
+                                Spotlight
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDrawerMentorId(x.id)}
+                                style={{
+                                  ...btn,
+                                  padding: '5px 10px',
+                                  fontSize: 11.5,
+                                  color: '#F4D67A',
+                                  border: '1px solid rgba(212,175,55,0.35)',
+                                  background: 'rgba(212,175,55,0.08)',
+                                  fontWeight: 600
+                                }}
+                                title="Open deep admin profile view"
+                              >
+                                Deep Profile ↗
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       )
@@ -1055,6 +1159,14 @@ export function LiveMentorships() {
           </Empty>
         )}
       </Card>
+
+      {drawerMentorId && (
+        <MentorDetailDrawer
+          mentorId={drawerMentorId}
+          onClose={() => setDrawerMentorId(null)}
+          onUpdate={load}
+        />
+      )}
     </PageShell>
   )
 }

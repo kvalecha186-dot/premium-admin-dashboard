@@ -164,3 +164,56 @@ export async function getConversationsNamed(){
   const[rows,{p,m}]=await Promise.all([getAdminConversations(),getMaps()])
   return rows.map((c:any)=>({...c,messageCount:c.messages?.length||0,student_name:p.get(c.student_id)?.full_name||p.get(c.student_id)?.email||null,mentor_name:m.get(c.mentor_id)?.name||p.get(c.mentor_id)?.full_name||null}))
 }
+
+export async function getAdminLearnerDetail(id: string) {
+  const [profileRows, progress, milestoneProgress, bookings, reviews, watchQueue, savedItems, xpTransactions, convos] = await Promise.all([
+    safe(db('profiles?id=eq.'+encodeURIComponent(id)+'&select=*')),
+    safe(db('user_progress?user_id=eq.'+encodeURIComponent(id)+'&select=*,growth_paths(title,category,level,duration)&order=created_at.desc')),
+    safe(db('milestone_progress?user_id=eq.'+encodeURIComponent(id)+'&select=*,milestones(title,week_number,phase)&order=completed_at.desc')),
+    safe(db('bookings?student_id=eq.'+encodeURIComponent(id)+'&select=*&order=scheduled_start.desc')),
+    safe(db('reviews?student_id=eq.'+encodeURIComponent(id)+'&select=*&order=created_at.desc')),
+    safe(db('watch_queue?user_id=eq.'+encodeURIComponent(id)+'&select=*,resources(title,type,url)&order=created_at.desc')),
+    safe(db('saved_items?user_id=eq.'+encodeURIComponent(id)+'&select=*&order=saved_at.desc')),
+    safe(db('xp_transactions?user_id=eq.'+encodeURIComponent(id)+'&select=*&order=created_at.desc')),
+    safe(db('conversations?student_id=eq.'+encodeURIComponent(id)+'&select=*&order=created_at.desc'))
+  ])
+  const profile = profileRows?.[0] || null
+  return {
+    profile,
+    progress: progress || [],
+    milestoneProgress: milestoneProgress || [],
+    bookings: bookings || [],
+    reviews: reviews || [],
+    watchQueue: watchQueue || [],
+    savedItems: savedItems || [],
+    xpTransactions: xpTransactions || [],
+    conversations: convos || []
+  }
+}
+
+export async function updateAdminMentor(id: string, updates: Record<string, any>) {
+  const { authRequest } = await import('./lib/supabase')
+  const r = await authRequest('/rest/v1/mentors?id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH',
+    body: JSON.stringify(updates)
+  })
+  if (!r.ok) {
+    const text = await r.text()
+    throw new Error(text || 'Failed to update mentor')
+  }
+  return true
+}
+
+export async function updateAdminProfile(id: string, updates: Record<string, any>) {
+  const { authRequest } = await import('./lib/supabase')
+  const r = await authRequest('/rest/v1/profiles?id=eq.' + encodeURIComponent(id), {
+    method: 'PATCH',
+    body: JSON.stringify(updates)
+  })
+  if (!r.ok) {
+    const text = await r.text()
+    throw new Error(text || 'Failed to update profile')
+  }
+  return true
+}
+
