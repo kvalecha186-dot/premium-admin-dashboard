@@ -376,9 +376,6 @@ export function LivePaths() {
           ✕ Reset Filter
         </button>
       )}
-      <div style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: 12.5, color: dim }}>
-        Showing <b style={{ color: '#F7EFD8' }}>{shown.length}</b> of {m.paths.length} growth paths
-      </div>
     </div>
     {shown.length ? (
       <div style={grid(2, 18)}>{shown.map((p: any) => <PathCard key={p.id} p={p} />)}</div>
