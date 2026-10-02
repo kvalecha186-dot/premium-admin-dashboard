@@ -740,29 +740,6 @@ function LiveMentorshipsContent({ d, err: _err, busy, load }: any) {
           </div>
         </div>
 
-        {/* Filter Status Badge / Scope Summary */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 18, padding: '10px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(212,175,55,0.1)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', fontSize: 12.5 }}>
-            <span style={{ color: dim }}>Active Scope:</span>
-            <Tag tone={selectedPath === 'All Growth Paths' ? 'gray' : 'gold'}>
-              Path: {selectedPath}
-            </Tag>
-            {selectedMentor && (
-              <Tag tone="green">
-                Mentor: {selectedMentor.name}
-              </Tag>
-            )}
-            <span style={{ color: dim, marginLeft: 6 }}>
-              {rankedMentors.length} {rankedMentors.length === 1 ? 'mentor' : 'mentors'} displayed
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12 }}>
-            <span style={{ color: dim }}>Combined Reach: <b style={{ color: '#F4D67A', fontFamily: 'Playfair Display,serif', fontSize: 14 }}>{totalMenteesInFilter}</b> mentees</span>
-            <span style={{ color: dim }}>Total Sessions: <b style={{ color: '#F7EFD8' }}>{totalSessionsInFilter}</b></span>
-          </div>
-        </div>
-
         {/* ── B. INDIVIDUAL MENTOR SPOTLIGHT ANALYTICS VIEW ── */}
         {selectedMentor ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
