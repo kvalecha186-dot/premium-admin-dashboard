@@ -199,7 +199,6 @@ export function LiveOverview() {
   const m = build(d)
   const topMentors = [...m.mentors].sort((a: any, b: any) => num(b.liveMenteeCount) - num(a.liveMenteeCount) || num(b.rating) - num(a.rating)).slice(0, 5)
   const pathRows = [...m.paths].sort((a: any, b: any) => b.enrolled - a.enrolled || num(b.rating) - num(a.rating))
-  const pathOf = (uid: string) => { const r = d.progress.find((x: any) => x.user_id === uid); return r ? { title: d.paths.find((p: any) => p.id === r.path_id)?.title || '—', pct: Math.round(num(r.overall_progress)) } : null }
 
   return <PageShell title="Starfix Overview" subtitle="Everything happening on Starfix right now — learners, mentors, growth paths and sessions, straight from the live database." action={<LiveBadge at={d.fetchedAt} busy={busy} load={load} />}>
     <div style={{ display: 'flex', gap: 6, marginBottom: 22, borderBottom: '1px solid rgba(212,175,55,0.16)', paddingBottom: 12 }}>
@@ -275,34 +274,6 @@ export function LiveOverview() {
                 </div>
               </div>)}
             </div>
-          </Card>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.25fr) minmax(0,1fr)', gap: 16 }}>
-          <Card>
-            <H title="Newest learners" sub="Latest people to join Starfix" />
-            {m.students.length ? <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {m.students.slice(0, 6).map((s: any) => { const pr = pathOf(s.id); return <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <Avatar name={s.full_name || s.email || '?'} size={38} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>{s.full_name || 'Unnamed learner'}</div>
-                  <div style={{ fontSize: 11.5, color: dim }}>{s.goal_title || s.career_goal || s.email}</div>
-                </div>
-                <div style={{ width: 150 }}>
-                  {pr ? <><div style={{ fontSize: 11.5, color: muted, marginBottom: 5 }}>{pr.title} · {pr.pct}%</div><Bar pct={pr.pct} /></> : <span style={{ fontSize: 11.5, color: dim }}>Not enrolled yet</span>}
-                </div>
-                <div style={{ fontSize: 11.5, color: dim, width: 70, textAlign: 'right' }}>{ago(s.created_at)}</div>
-              </div> })}
-            </div> : <Empty>No learners have signed up yet.</Empty>}
-          </Card>
-          <Card>
-            <H title="Recent sessions" sub="Latest mentor bookings" />
-            {d.bookings.length ? <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {d.bookings.slice(0, 5).map((b: any) => <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-                <div><div style={{ fontSize: 13.5, fontWeight: 600 }}>{b.mentor_name || 'Mentor'}</div><div style={{ fontSize: 11.5, color: dim }}>{b.session_type || 'Mentoring session'} · {ago(b.created_at)}</div></div>
-                <div style={{ textAlign: 'right' }}><div style={{ fontSize: 13 }}>{money(num(b.amount))}</div><Tag tone={/confirm|complet/i.test(b.status || '') ? 'green' : /cancel/i.test(b.status || '') ? 'red' : 'amber'}>{b.status || '—'}</Tag></div>
-              </div>)}
-            </div> : <Empty>No sessions booked yet.<br />New bookings appear here automatically.</Empty>}
           </Card>
         </div>
       </>
