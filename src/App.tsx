@@ -24,7 +24,7 @@ function Constellation(){
 import { ErrorBoundary } from './ErrorBoundary'
 
 function Shell({page,setPage,profile}:{page:Page,setPage:(p:Page)=>void,profile:any}){
- const sections=[['Main',[['overview','Overview','overview'],['users','Learners','users'],['mentors','Mentors','mentors'],['mentorship','Mentor–Mentee','graduationCap'],['bookings','Sessions & Bookings','calendar'],['paths','Growth Paths','paths'],['explore','Explore Content','sparkles'],['messages','Conversations','mail']]],['Insights',[['analytics','Analytics','analytics']]],['System',[['security','Security','shieldCheck'],['settings','Settings','settings']]]] as const
+ const sections=[['Main',[['overview','Overview','overview'],['users','Learners','users'],['mentors','Mentors','mentors'],['mentorship','Mentor–Mentee','graduationCap'],['bookings','Sessions & Bookings','calendar'],['paths','Growth Paths','paths'],['messages','Conversations','mail']]],['Insights',[['analytics','Analytics','analytics']]],['System',[['security','Security','shieldCheck'],['settings','Settings','settings']]]] as const
  const name=profile?.full_name||(profile?.email||'').split('@')[0]||'Administrator'
  const[menu,setMenu]=useState(false)
  return <div className="sx-app" style={{display:'flex',minHeight:'100vh',color:'#F7EFD8',fontFamily:'Inter,system-ui,sans-serif',background:'radial-gradient(1200px 620px at 85% -10%,#12204F 0%,transparent 60%),radial-gradient(900px 500px at -10% 110%,rgba(212,175,55,.08) 0%,transparent 60%),#05070F'}}>
@@ -67,8 +67,7 @@ function Shell({page,setPage,profile}:{page:Page,setPage:(p:Page)=>void,profile:
       {page==='mentors'&&<LiveMentors/>}
       {page==='mentorship'&&<LiveMentorships/>}
       {page==='bookings'&&<LiveBookings/>}
-      {page==='explore'&&<LiveExplore/>}
-      {page==='messages'&&<LiveMessages/>}
+          {page==='messages'&&<LiveMessages/>}
       {page==='analytics'&&<LiveAnalytics/>}
       {page==='security'&&<SecurityPage/>}
       {page==='settings'&&<SettingsPage/>}
