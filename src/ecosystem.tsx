@@ -318,7 +318,7 @@ function PathCard({ p }: { p: any }) {
   const enrolled = Math.max(p.enrolled, num(p.learner_count))
   return <Card style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <Tag>{p.category}</Tag><span style={{ fontSize: 13, color: '#F4D67A' }}>★ {num(p.rating).toFixed(1)}</span>
+      <Tag>{p.category}</Tag><span style={{ fontSize: 13, color: '#F4D67A' }}>{p.rating == null ? '—' : '★ ' + num(p.rating).toFixed(1)}</span>
     </div>
     <div>
       <div style={{ fontFamily: 'Playfair Display,serif', fontSize: 23, fontWeight: 600 }}>{p.title}</div>
