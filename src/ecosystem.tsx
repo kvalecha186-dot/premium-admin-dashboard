@@ -204,15 +204,15 @@ export function LiveOverview({ profile }: { profile?: any } = {}) {
 
   return <PageShell
     eyebrow={
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
         <span style={{
-          fontFamily: 'Playfair Display, serif', fontSize: 15, fontWeight: 600, letterSpacing: '.01em',
+          fontFamily: 'Playfair Display, serif', fontSize: 22, fontWeight: 600, letterSpacing: '.01em',
           background: 'linear-gradient(100deg,#9FD8FF 0%,#F4D67A 55%,#D4AF37 100%)',
           WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
         }}>
           Welcome back, {adminName}
         </span>
-        <span style={{ fontSize: 11.5, color: '#6B7190' }}>· {todayStr}</span>
+        <span style={{ fontSize: 13, color: '#8A90AB' }}>· {todayStr}</span>
       </div>
     }
     title="Starfix Overview" subtitle="Everything happening on Starfix right now — learners, mentors, growth paths and sessions, straight from the live database." action={<LiveBadge at={d.fetchedAt} busy={busy} load={load} />}>
