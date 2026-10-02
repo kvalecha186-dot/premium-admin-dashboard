@@ -492,33 +492,6 @@ export default function SettingsPage({ profile }: { profile?: any }) {
     <PageShell
       title="Platform Settings & Governance"
       subtitle="Configure operational limits, mentorship scheduling rules, billing settlement cycles, transactional dispatch, and infrastructure controls."
-      action={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving || !isDirty}
-            style={{
-              padding: '9px 20px',
-              borderRadius: 9,
-              border: 'none',
-              background: isDirty ? 'linear-gradient(135deg, #F4D67A 0%, #D4AF37 100%)' : 'rgba(255,255,255,0.08)',
-              color: isDirty ? '#070A1A' : '#7C8099',
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: isDirty ? 'pointer' : 'default',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              boxShadow: isDirty ? '0 4px 18px rgba(212,175,55,0.32)' : 'none',
-              transition: 'all 150ms ease',
-            }}
-          >
-            <Icon d={icons.check} size={15} style={{ color: isDirty ? '#070A1A' : '#7C8099' }} />
-            {isSaving ? 'Saving…' : isDirty ? 'Save Changes' : 'Saved'}
-          </button>
-        </div>
-      }
     >
       {/* Toast Alert */}
       {toastMessage && (
