@@ -3,11 +3,11 @@ import { icons, Icon } from './shared'
 import SettingsPage from './settings/SettingsPage'
 import SecurityPage from './security/SecurityPage'
 import AdminSplash from './AdminSplash'
-import { AdminGate, LiveUsers, LiveBookings, LiveMessages, LiveAnalytics, AdminHeader } from './liveAdmin'
+import { AdminGate, LiveUsers, LiveBookings, LiveAnalytics, AdminHeader } from './liveAdmin'
 import { LiveOverview, LivePaths, LiveMentors, LiveMentorships } from './ecosystem'
 import { requireAdmin } from './lib/supabase'
 
-type Page='overview'|'users'|'paths'|'mentors'|'mentorship'|'bookings'|'messages'|'analytics'|'settings'|'security'
+type Page='overview'|'users'|'paths'|'mentors'|'mentorship'|'bookings'|'analytics'|'settings'|'security'
 
 // Faint gold constellation, echoing the Starfix landing page hero.
 const NODES:[number,number][]=[[60,80],[180,30],[300,110],[420,50],[540,140],[660,70],[780,120],[120,200],[250,240],[380,190],[520,260],[650,210],[760,280],[90,330],[330,340],[590,350]]
@@ -24,7 +24,7 @@ function Constellation(){
 import { ErrorBoundary } from './ErrorBoundary'
 
 function Shell({page,setPage,profile}:{page:Page,setPage:(p:Page)=>void,profile:any}){
- const sections=[['Main',[['overview','Overview','overview'],['users','Learners','users'],['mentors','Mentors','mentors'],['mentorship','Mentor–Mentee','graduationCap'],['bookings','Sessions & Bookings','calendar'],['paths','Growth Paths','paths'],['messages','Conversations','mail']]],['Insights',[['analytics','Analytics','analytics']]],['System',[['security','Security','shieldCheck'],['settings','Settings','settings']]]] as const
+ const sections=[['Main',[['overview','Overview','overview'],['users','Learners','users'],['mentors','Mentors','mentors'],['mentorship','Mentor–Mentee','graduationCap'],['bookings','Sessions & Bookings','calendar'],['paths','Growth Paths','paths']]],['Insights',[['analytics','Analytics','analytics']]],['System',[['security','Security','shieldCheck'],['settings','Settings','settings']]]] as const
  const name=profile?.full_name||(profile?.email||'').split('@')[0]||'Administrator'
  const[menu,setMenu]=useState(false)
  return <div className="sx-app" style={{display:'flex',minHeight:'100vh',color:'#F7EFD8',fontFamily:'Inter,system-ui,sans-serif',background:'radial-gradient(1200px 620px at 85% -10%,#12204F 0%,transparent 60%),radial-gradient(900px 500px at -10% 110%,rgba(212,175,55,.08) 0%,transparent 60%),#05070F'}}>
@@ -67,7 +67,6 @@ function Shell({page,setPage,profile}:{page:Page,setPage:(p:Page)=>void,profile:
       {page==='mentors'&&<LiveMentors/>}
       {page==='mentorship'&&<LiveMentorships/>}
       {page==='bookings'&&<LiveBookings/>}
-          {page==='messages'&&<LiveMessages/>}
       {page==='analytics'&&<LiveAnalytics/>}
       {page==='security'&&<SecurityPage/>}
       {page==='settings'&&<SettingsPage/>}
