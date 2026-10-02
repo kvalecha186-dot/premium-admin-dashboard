@@ -249,13 +249,6 @@ export function LiveOverview({ profile }: { profile?: any } = {}) {
           <Kpi label="Sessions booked" value={d.bookings.length} detail={money(m.revenue) + ' booked value'} />
         </div>
 
-        <div style={{ ...grid(4), marginBottom: 16 }}>
-          <Kpi label="Progress records" value={d.progress.length} detail={d.milestoneProgress.length + ' milestone-level records'} />
-          <Kpi label="Saved resources" value={d.savedItems.length} detail={d.watchQueue.length + ' items in learner watch queues'} />
-          <Kpi label="XP transactions" value={d.xpTransactions.length} detail="Real learner activity events" />
-          <Kpi label="Notifications" value={d.notifications.length} detail="Stored Starfix notifications" />
-        </div>
-
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.25fr) minmax(0,1fr)', gap: 16, marginBottom: 16 }}>
           <Card>
             <H title="Growth path momentum" sub="Learners enrolled and average completion on every path" />
