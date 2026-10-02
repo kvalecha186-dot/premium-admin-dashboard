@@ -3,11 +3,11 @@ import { icons, Icon } from './shared'
 import SettingsPage from './settings/SettingsPage'
 import SecurityPage from './security/SecurityPage'
 import AdminSplash from './AdminSplash'
-import { AdminGate, LiveUsers, LiveBookings, LiveExplore, LiveMessages, LiveAnalytics, AdminHeader } from './liveAdmin'
+import { AdminGate, LiveUsers, LiveBookings, LiveMessages, LiveAnalytics, AdminHeader } from './liveAdmin'
 import { LiveOverview, LivePaths, LiveMentors, LiveMentorships } from './ecosystem'
 import { requireAdmin } from './lib/supabase'
 
-type Page='overview'|'users'|'paths'|'mentors'|'mentorship'|'bookings'|'explore'|'messages'|'analytics'|'settings'|'security'
+type Page='overview'|'users'|'paths'|'mentors'|'mentorship'|'bookings'|'messages'|'analytics'|'settings'|'security'
 
 // Faint gold constellation, echoing the Starfix landing page hero.
 const NODES:[number,number][]=[[60,80],[180,30],[300,110],[420,50],[540,140],[660,70],[780,120],[120,200],[250,240],[380,190],[520,260],[650,210],[760,280],[90,330],[330,340],[590,350]]
