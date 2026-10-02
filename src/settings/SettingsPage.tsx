@@ -496,23 +496,6 @@ export default function SettingsPage({ profile }: { profile?: any }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
             type="button"
-            onClick={handleResetDefaults}
-            style={{
-              padding: '9px 16px',
-              borderRadius: 9,
-              border: '1px solid rgba(212,175,55,0.22)',
-              background: 'rgba(255,255,255,0.03)',
-              color: '#B8BCD0',
-              fontSize: 12.5,
-              fontWeight: 500,
-              cursor: 'pointer',
-              transition: 'all 150ms ease',
-            }}
-          >
-            Reset Defaults
-          </button>
-          <button
-            type="button"
             onClick={handleSave}
             disabled={isSaving || !isDirty}
             style={{
