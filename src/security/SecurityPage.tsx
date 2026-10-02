@@ -115,10 +115,5 @@ export default function SecurityPage() {
         </table>
       </Card>
     </div>
-
-    <div style={{ marginTop: 20, fontSize: 12.5, color: dim, display: 'flex', alignItems: 'center', gap: 8 }}>
-      <Icon d={icons.eye} size={14} />
-      Full sign-in history and failed-login attempts are recorded in Supabase under Authentication → Audit Logs.
-    </div>
   </PageShell>
 }
