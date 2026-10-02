@@ -69,7 +69,7 @@ function Shell({page,setPage,profile}:{page:Page,setPage:(p:Page)=>void,profile:
       {page==='bookings'&&<LiveBookings/>}
       {page==='analytics'&&<LiveAnalytics/>}
       {page==='security'&&<SecurityPage/>}
-      {page==='settings'&&<SettingsPage/>}
+      {page==='settings'&&<SettingsPage profile={profile}/>}
     </ErrorBoundary>
    </main>
   </div>
