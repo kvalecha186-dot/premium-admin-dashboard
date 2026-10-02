@@ -191,7 +191,7 @@ function Loading({ title, sub, err }: { title: string; sub: string; err: string 
 const availTone = (a?: string) => a === 'Today' ? 'green' : a === 'Tomorrow' ? 'amber' : 'gray'
 
 // ── OVERVIEW ────────────────────────────────────────────────────────────────
-export function LiveOverview() {
+export function LiveOverview({ profile }: { profile?: any } = {}) {
   const { d, err, busy, load } = useEcosystem()
   const [viewMode, setViewMode] = useState<'overview' | 'geography' | 'activity'>('overview')
 
@@ -199,8 +199,23 @@ export function LiveOverview() {
   const m = build(d)
   const topMentors = [...m.mentors].sort((a: any, b: any) => num(b.liveMenteeCount) - num(a.liveMenteeCount) || num(b.rating) - num(a.rating)).slice(0, 5)
   const pathRows = [...m.paths].sort((a: any, b: any) => b.enrolled - a.enrolled || num(b.rating) - num(a.rating))
+  const adminName = profile?.full_name || (profile?.email || '').split('@')[0] || 'Administrator'
+  const todayStr = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
-  return <PageShell title="Starfix Overview" subtitle="Everything happening on Starfix right now — learners, mentors, growth paths and sessions, straight from the live database." action={<LiveBadge at={d.fetchedAt} busy={busy} load={load} />}>
+  return <PageShell
+    eyebrow={
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+        <span style={{
+          fontFamily: 'Playfair Display, serif', fontSize: 15, fontWeight: 600, letterSpacing: '.01em',
+          background: 'linear-gradient(100deg,#9FD8FF 0%,#F4D67A 55%,#D4AF37 100%)',
+          WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+        }}>
+          Welcome back, {adminName}
+        </span>
+        <span style={{ fontSize: 11.5, color: '#6B7190' }}>· {todayStr}</span>
+      </div>
+    }
+    title="Starfix Overview" subtitle="Everything happening on Starfix right now — learners, mentors, growth paths and sessions, straight from the live database." action={<LiveBadge at={d.fetchedAt} busy={busy} load={load} />}>
     <div style={{ display: 'flex', gap: 6, marginBottom: 22, borderBottom: '1px solid rgba(212,175,55,0.16)', paddingBottom: 12 }}>
       {[
         { id: 'overview', label: '✦ Ecosystem Overview' },

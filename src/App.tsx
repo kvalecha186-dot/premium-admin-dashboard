@@ -61,7 +61,7 @@ function Shell({page,setPage,profile}:{page:Page,setPage:(p:Page)=>void,profile:
    <Constellation/>
    <main className="sx-main" style={{position:'relative',zIndex:1}}>
     <ErrorBoundary fallbackTitle={`Error rendering ${page}`}>
-      {page==='overview'&&<LiveOverview/>}
+      {page==='overview'&&<LiveOverview profile={profile}/>}
       {page==='users'&&<LiveUsers/>}
       {page==='paths'&&<LivePaths/>}
       {page==='mentors'&&<LiveMentors/>}

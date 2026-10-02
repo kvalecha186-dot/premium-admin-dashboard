@@ -87,11 +87,12 @@ export function Card({ children, style = {}, className = '', onClick }: { childr
   )
 }
 
-export function PageShell({ title, subtitle, action, children }: { title: string; subtitle: string; action?: React.ReactNode; children: React.ReactNode }) {
+export function PageShell({ title, subtitle, action, eyebrow, children }: { title: string; subtitle: string; action?: React.ReactNode; eyebrow?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="sx-page" style={{ padding: '40px 44px 56px', maxWidth: 1220, margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32, gap: 16 }}>
         <div>
+          {eyebrow}
           <h1 style={{
             fontFamily: 'Playfair Display, serif', fontSize: 36, fontWeight: 600, margin: 0, lineHeight: 1.15,
             background: 'linear-gradient(100deg,#FFF3C4 0%,#F4D67A 30%,#D4AF37 65%,#B8901F 100%)',
