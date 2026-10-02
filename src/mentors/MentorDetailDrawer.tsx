@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Card } from '../shared'
-import { getAdminMentorDetail, updateAdminMentor } from '../adminBackend'
+import { getAdminMentorDetail } from '../adminBackend'
 import { getDeviceAccessInfo, buildMentorTimeline, ActivityEvent } from '../lib/userIntelligence'
 import { getMentorPrimaryPath, toSkillsArray } from '../growthPathFilter'
 
@@ -80,28 +80,6 @@ export function MentorDetailDrawer({ mentorId, initialMentor, onClose, onUpdate 
   ]
   const profileCompletionPct = Math.round((completionFields.filter(Boolean).length / completionFields.length) * 100)
 
-
-  const handleStatusToggle = () => {
-    const next = statusState === 'Suspended' ? 'Active' : 'Suspended'
-    setActionConfirm({
-      action: 'status',
-      title: next === 'Suspended' ? 'Suspend Mentor Account?' : 'Reactivate Mentor Account?',
-      desc: next === 'Suspended'
-        ? `Suspending ${m.name || 'this mentor'} will prevent new bookings and mark their profile inactive.`
-        : `Reactivating will restore ${m.name || 'this mentor'} to active operations and allow new sessions.`,
-      onConfirm: async () => {
-        setActionBusy(true)
-        try {
-          await updateAdminMentor(m.id, { mentor_status: next })
-          setStatusState(next)
-          onUpdate?.()
-        } finally {
-          setActionBusy(false)
-          setActionConfirm(null)
-        }
-      }
-    })
-  }
 
   return createPortal(
     <div
@@ -245,27 +223,6 @@ export function MentorDetailDrawer({ mentorId, initialMentor, onClose, onUpdate 
                   <span>ID: <code style={{ color: '#D4AF37', fontSize: 11 }}>{(m.id || '').slice(0, 8)}…</code></span>
                 </div>
               </div>
-            </div>
-
-            {/* Admin Action Buttons */}
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={handleStatusToggle}
-                style={{
-                  padding: '7px 12px',
-                  borderRadius: 8,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: statusState === 'Suspended' ? '1px solid rgba(74,222,128,0.4)' : '1px solid rgba(248,113,113,0.4)',
-                  background: 'rgba(255,255,255,0.05)',
-                  color: statusState === 'Suspended' ? '#4ADE80' : '#F87171',
-                  transition: 'all 140ms ease'
-                }}
-              >
-                {statusState === 'Suspended' ? 'Reactivate Account' : 'Suspend Account'}
-              </button>
             </div>
           </div>
 

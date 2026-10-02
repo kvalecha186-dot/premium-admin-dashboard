@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Card } from '../shared'
-import { getAdminLearnerDetail, updateAdminProfile } from '../adminBackend'
+import { getAdminLearnerDetail } from '../adminBackend'
 import { getDeviceAccessInfo, buildLearnerTimeline, ActivityEvent } from '../lib/userIntelligence'
 
 interface LearnerDetailDrawerProps {
@@ -80,28 +80,6 @@ export function LearnerDetailDrawer({ learnerId, initialUser, onClose, onUpdate 
   // Completion calculation
   const profileFields = [name, email, careerGoal, activePath !== 'Not enrolled', streak > 0, xp > 0]
   const profileCompletionPct = Math.round((profileFields.filter(Boolean).length / profileFields.length) * 100)
-
-  const handleStatusToggle = () => {
-    const next = statusState === 'Inactive' ? 'Active' : 'Inactive'
-    setActionConfirm({
-      action: 'status',
-      title: next === 'Inactive' ? 'Mark Learner Inactive?' : 'Reactivate Learner Account?',
-      desc: next === 'Inactive'
-        ? `This will flag ${name}'s account status as Inactive on the admin directory.`
-        : `This will restore ${name}'s account status to Active.`,
-      onConfirm: async () => {
-        setActionBusy(true)
-        try {
-          await updateAdminProfile(learnerId, { role: 'student' })
-          setStatusState(next)
-          onUpdate?.()
-        } finally {
-          setActionBusy(false)
-          setActionConfirm(null)
-        }
-      }
-    })
-  }
 
   return createPortal(
     <div
@@ -242,26 +220,6 @@ export function LearnerDetailDrawer({ learnerId, initialUser, onClose, onUpdate 
                   <span>ID: <code style={{ color: '#D4AF37', fontSize: 11 }}>{(learnerId || '').slice(0, 8)}…</code></span>
                 </div>
               </div>
-            </div>
-
-            {/* Admin Action */}
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                type="button"
-                onClick={handleStatusToggle}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: 8,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: statusState === 'Inactive' ? '1px solid rgba(74,222,128,0.4)' : '1px solid rgba(248,113,113,0.4)',
-                  background: 'rgba(255,255,255,0.05)',
-                  color: statusState === 'Inactive' ? '#4ADE80' : '#F87171'
-                }}
-              >
-                {statusState === 'Inactive' ? 'Reactivate Learner' : 'Set as Inactive'}
-              </button>
             </div>
           </div>
 
