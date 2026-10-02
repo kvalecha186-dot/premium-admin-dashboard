@@ -595,9 +595,6 @@ export function LiveMentors() {
           ✕ Clear Path Filter
         </button>
       )}
-      <div style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: 12.5, color: dim }}>
-        Showing <b style={{ color: '#F7EFD8' }}>{shown.length}</b> of {m.mentors.length} mentors
-      </div>
     </div>
     {shown.length ? <div style={grid(2, 18)}>{shown.map((x: any) => <MentorCard key={x.id} m={x} onInspect={setSelectedMentorId} />)}</div> : <Card><Empty>No mentors match this filter.</Empty></Card>}
 
