@@ -204,18 +204,16 @@ export function LiveOverview({ profile }: { profile?: any } = {}) {
 
   return <PageShell
     eyebrow={
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
-        <span style={{
-          fontFamily: 'Playfair Display, serif', fontSize: 22, fontWeight: 600, letterSpacing: '.01em',
-          background: 'linear-gradient(100deg,#9FD8FF 0%,#F4D67A 55%,#D4AF37 100%)',
-          WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-        }}>
-          Welcome back, {adminName}
-        </span>
-        <span style={{ fontSize: 13, color: '#8A90AB' }}>· {todayStr}</span>
+      <div style={{
+        fontSize: 12, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase',
+        color: '#D4AF37', marginBottom: 10,
+      }}>
+        {todayStr}
       </div>
     }
-    title="Starfix Overview" subtitle="Everything happening on Starfix right now — learners, mentors, growth paths and sessions, straight from the live database." action={<LiveBadge at={d.fetchedAt} busy={busy} load={load} />}>
+    title={`Welcome back, ${adminName}.`}
+    subtitle="Here's everything happening across Starfix right now — learners, mentors, growth paths and sessions, straight from the live database."
+    action={<LiveBadge at={d.fetchedAt} busy={busy} load={load} />}>
     <div style={{ display: 'flex', gap: 6, marginBottom: 22, borderBottom: '1px solid rgba(212,175,55,0.16)', paddingBottom: 12 }}>
       {[
         { id: 'overview', label: '✦ Ecosystem Overview' },
