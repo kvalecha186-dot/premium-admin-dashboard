@@ -8,58 +8,102 @@ export interface CategoryGroup {
 
 export const STARFIX_PATH_CATEGORIES: CategoryGroup[] = [
   {
-    category: 'CODING & TECHNOLOGY',
-    paths: [
-      'Python',
-      'Programming / Coding',
-      'AI & Machine Learning',
-      'Web Development / MERN',
-      'Data Structures & Algorithms'
+    "category": "Career & Tech",
+    "paths": [
+      "Coding",
+      "AI & Machine Learning",
+      "Data Science",
+      "Cyber Security",
+      "Cloud Computing",
+      "DevOps",
+      "UI/UX Design",
+      "Web Development",
+      "App Development",
+      "System Design",
+      "DSA",
+      "Open Source",
+      "Blockchain",
+      "Product Management",
+      "Digital Marketing",
+      "Content Creation",
+      "Public Speaking",
+      "Entrepreneurship",
+      "Finance",
+      "Investing",
+      "Freelancing",
+      "Career Growth",
+      "Interview Preparation",
+      "Leadership"
     ]
   },
   {
-    category: 'COMMUNICATION & CAREER',
-    paths: [
-      'Communication Skills',
-      'Public Speaking',
-      'Interview Preparation',
-      'Career Development'
+    "category": "Health & Fitness",
+    "paths": [
+      "Weight Loss",
+      "Muscle Building",
+      "Running",
+      "Yoga",
+      "Nutrition",
+      "Healthy Eating",
+      "Home Workout",
+      "Gym Training",
+      "Cycling",
+      "Stretching",
+      "Sleep Optimization"
     ]
   },
   {
-    category: 'SELF-IMPROVEMENT',
-    paths: [
-      'Self-Confidence',
-      'Discipline',
-      'Productivity',
-      'Time Management',
-      'Personal Growth'
+    "category": "Mindset",
+    "paths": [
+      "Meditation",
+      "Mindfulness",
+      "Self Discipline",
+      "Confidence",
+      "Communication Skills",
+      "Emotional Intelligence",
+      "Stress Management",
+      "Productivity",
+      "Time Management",
+      "Deep Work",
+      "Habit Building",
+      "Positive Thinking",
+      "Focus",
+      "Creativity",
+      "Decision Making",
+      "Critical Thinking"
     ]
   },
   {
-    category: 'MIND & WELLNESS',
-    paths: [
-      'Meditation',
-      'Mental Wellness',
-      'Stress Management',
-      'Mindfulness'
+    "category": "Personal Life",
+    "paths": [
+      "Reading Habit",
+      "Writing",
+      "Photography",
+      "Music",
+      "Drawing",
+      "Travel Planning",
+      "Minimalism",
+      "Personal Branding",
+      "Fashion",
+      "Networking",
+      "Relationship Skills",
+      "Language Learning",
+      "Financial Planning",
+      "Life Organization"
     ]
   },
   {
-    category: 'FITNESS & HEALTH',
-    paths: [
-      'Fitness',
-      'Weight Loss',
-      'Workout',
-      'Healthy Lifestyle'
-    ]
-  },
-  {
-    category: 'CREATIVITY & HOBBIES',
-    paths: [
-      'Dance',
-      'Creative Skills',
-      'Other personal-interest paths'
+    "category": "Student Life",
+    "paths": [
+      "Exam Preparation",
+      "Study Techniques",
+      "Research Skills",
+      "Scholarships",
+      "Study Abroad",
+      "IELTS",
+      "GRE",
+      "Resume Building",
+      "College Success"
     ]
   }
 ]
