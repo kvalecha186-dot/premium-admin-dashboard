@@ -76,7 +76,17 @@ export async function getAdminMentors():Promise<AdminMentor[]>{
     mentorStatus:m.mentor_status,performanceBand:m.performance_band
   }));
 }
-export async function getAdminBookings(){const data=await db('bookings?select=id,student_id,mentor_id,mentor_name,mentor_title,mentor_company,session_type,duration,price,amount,currency,status,scheduled_start,scheduled_end,booking_date,booking_time,notes,created_at&order=scheduled_start.desc&limit=500');return data}
+export async function getAdminBookings(){
+  const [rows,payments]=await Promise.all([
+    db('bookings?select=id,student_id,mentor_id,mentor_name,mentor_title,mentor_company,session_type,duration,price,amount,currency,status,scheduled_start,scheduled_end,booking_date,booking_time,notes,created_at&order=scheduled_start.desc&limit=500'),
+    db('payments?select=booking_id,status,amount_paise,currency')
+  ]);
+  const byBooking=new Map((payments||[]).map((p:any)=>[p.booking_id,p]));
+  return (rows||[]).map((b:any)=>{
+    const p:any=byBooking.get(b.id);
+    return {...b,payment_status:p?.status||(Number(b.amount||0)===0?'free':'not initiated'),payment_amount_paise:p?.amount_paise??null};
+  });
+}
 export async function getAdminExplore(){return db('explore_content?select=id,title,category,content_type,url,metric_value,description,active,created_at,updated_at&order=created_at.desc&limit=500')}
 export async function getAdminConversations(){const [c,m]=await Promise.all([db('conversations?select=id,student_id,mentor_id,archived,created_at&order=created_at.desc&limit=500'),db('messages?select=id,conversation_id,sender,body,status,created_at&order=created_at.desc&limit=1000')]);return c.map((x:any)=>({...x,messages:m.filter((y:any)=>y.conversation_id===x.id).slice(0,5)}))}
 export async function getAdminAnalytics(){
