@@ -337,6 +337,7 @@ export async function getAdminPaths() {
   })
 }
 
+
 // ── Live ecosystem data (single fetch shared by Overview, Paths, Mentors, Mentor–Mentee) ──
 async function safe(p: Promise<any>): Promise<any[]> {
   try {
