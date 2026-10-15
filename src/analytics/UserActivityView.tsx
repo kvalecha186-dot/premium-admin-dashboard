@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { Card } from '../shared'
 import { getEcosystem } from '../adminBackend'
+import { fetchLiveLogins, type UserLoginEvent } from '../lib/loginAudit'
 
 interface UserActivityViewProps {
   ecosystem?: any
@@ -10,17 +11,17 @@ type TimeWindow = '7d' | '14d' | '30d' | '90d' | 'all'
 
 export function UserActivityView({ ecosystem }: UserActivityViewProps) {
   const [liveData, setLiveData] = useState<any>(ecosystem || null)
+  const [liveLogins, setLiveLogins] = useState<UserLoginEvent[]>([])
   const [loading, setLoading] = useState(!ecosystem)
   const [timeWindow, setTimeWindow] = useState<TimeWindow>('30d')
-  const [hoveredDay, setHoveredDay] = useState<any | null>(null)
-
   useEffect(() => {
+    let isMounted = true
+    fetchLiveLogins().then(res => { if (isMounted) setLiveLogins(res) }).catch(() => {})
     if (ecosystem) {
       setLiveData(ecosystem)
       setLoading(false)
       return
     }
-    let isMounted = true
     setLoading(true)
     getEcosystem()
       .then(res => {
@@ -74,9 +75,12 @@ export function UserActivityView({ ecosystem }: UserActivityViewProps) {
       userTouches.set(userId, list)
     }
 
-    // 1. Profile creations
+    // 1. Profile creations & live logins
     profiles.forEach(p => {
       if (p.created_at) recordTouch(p.id, Date.parse(p.created_at))
+    })
+    liveLogins.forEach(l => {
+      if (l.timestamp) recordTouch(l.userId || l.email, Date.parse(l.timestamp))
     })
 
     // 2. Progress activity
