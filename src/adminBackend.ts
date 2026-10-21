@@ -280,43 +280,69 @@ export async function getAdminConversations() {
 }
 
 export async function getAdminAnalytics() {
-  let o: any = {}
-  try {
-    const overview = await rpc<any[]>('get_admin_overview_metrics')
-    o = overview?.[0] || {}
-  } catch {}
-
-  const [profiles, progress, bookings, reviews, notifications, saved] = await Promise.all([
-    safe(db('profiles?select=id,role,created_at')),
-    safe(db('user_progress?select=id,user_id,overall_progress,xp,streak,last_active_date')),
-    safe(db('bookings?select=id,status,amount,created_at,scheduled_start')),
-    safe(db('reviews?select=id,rating,created_at')),
+  // Analytics intentionally uses persisted records only. Never substitute demo metrics
+  // when the database is empty or an RPC is unavailable.
+  const [profiles, mentorRows, progress, bookings, reviews, notifications, saved] = await Promise.all([
+    safe(db('profiles?select=id,role,created_at,country')),
+    safe(db('mentors?select=id,profile_id,created_at')),
+    safe(db('user_progress?select=id,user_id,overall_progress,xp,streak,last_active_date,created_at')),
+    safe(db('bookings?select=id,status,amount,currency,created_at,scheduled_start,student_id,mentor_id')),
+    safe(db('reviews?select=id,rating,created_at,student_id,mentor_id')),
     safe(db('notifications?select=id,created_at')),
     safe(db('saved_items?select=id,created_at'))
   ])
 
-  const studentProgress = progress || []
+  const students = profiles.filter((x: any) => x.role === 'student')
+  const admins = profiles.filter((x: any) => x.role === 'admin')
+  const mentorProfileIds = new Set(mentorRows.map((m: any) => m.profile_id).filter(Boolean))
+  const registeredMentors = new Set([
+    ...profiles.filter((x: any) => x.role === 'mentor').map((x: any) => x.id),
+    ...mentorProfileIds
+  ])
+  const progressRows = progress || []
   const bookingRows = bookings || []
   const reviewRows = reviews || []
+  const now = Date.now()
+  const since7d = now - 7 * 86400000
+  const activeIds = new Set<string>()
+  progressRows.forEach((p: any) => {
+    if (p.user_id && p.last_active_date && Date.parse(p.last_active_date) >= since7d) activeIds.add(p.user_id)
+  })
+  const confirmedRows = bookingRows.filter((b: any) => ['confirmed', 'completed'].includes(String(b.status || '').toLowerCase()))
+  const activeMentees = new Set(confirmedRows.map((b: any) => b.student_id).filter(Boolean)).size
+  const ratings = reviewRows.map((r: any) => Number(r.rating)).filter((n: number) => Number.isFinite(n) && n > 0)
+
+  const signupsByDay = Array.from({ length: 14 }, (_, i) => {
+    const day = new Date(now - (13 - i) * 86400000)
+    const key = day.toISOString().slice(0, 10)
+    return {
+      date: key,
+      label: day.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+      learners: students.filter((p: any) => p.created_at && String(p.created_at).slice(0, 10) === key).length,
+      mentors: mentorRows.filter((m: any) => m.created_at && String(m.created_at).slice(0, 10) === key).length
+    }
+  })
 
   return {
-    students: Number(o.registered_learners) || profiles.filter((x: any) => x.role === 'student').length || 1,
-    mentors: Number(o.registered_mentors) || 10,
-    mentorListings: Number(o.mentor_listings) || 10,
-    activeMentees: Number(o.active_mentees) || 0,
-    admins: profiles.filter((x: any) => x.role === 'admin').length || 1,
-    progressRecords: studentProgress.length,
-    completed: studentProgress.filter((x: any) => Number(x.overall_progress) >= 100).length,
-    totalXp: studentProgress.reduce((s: number, x: any) => s + (Number(x.xp) || 0), 0) || 150,
-    avgProgress: studentProgress.length ? Math.round(studentProgress.reduce((s: number, x: any) => s + (Number(x.overall_progress) || 0), 0) / studentProgress.length) : 25,
-    active7: studentProgress.filter((x: any) => x.last_active_date && Date.parse(x.last_active_date) >= Date.now() - 7 * 86400000).length || 1,
+    students: students.length,
+    mentors: registeredMentors.size,
+    mentorListings: mentorRows.length,
+    activeMentees,
+    admins: admins.length,
+    progressRecords: progressRows.length,
+    completed: progressRows.filter((x: any) => Number(x.overall_progress) >= 100).length,
+    totalXp: progressRows.reduce((s: number, x: any) => s + (Number(x.xp) || 0), 0),
+    avgProgress: progressRows.length ? Math.round(progressRows.reduce((s: number, x: any) => s + (Number(x.overall_progress) || 0), 0) / progressRows.length) : 0,
+    active7: activeIds.size,
     bookings: bookingRows.length,
-    confirmed: bookingRows.filter((x: any) => ['confirmed', 'completed'].includes(x.status)).length,
-    revenue: bookingRows.reduce((s: number, x: any) => s + (Number(x.amount) || 0), 0),
-    avgRating: reviewRows.length ? Math.round((reviewRows.reduce((s: number, x: any) => s + Number(x.rating || 0), 0) / reviewRows.length) * 10) / 10 : 4.9,
+    confirmed: confirmedRows.length,
+    revenue: bookingRows.filter((b: any) => ['confirmed', 'completed'].includes(String(b.status || '').toLowerCase())).reduce((s: number, x: any) => s + (Number(x.amount) || 0), 0),
+    avgRating: ratings.length ? Math.round((ratings.reduce((s: number, n: number) => s + n, 0) / ratings.length) * 10) / 10 : null,
     reviews: reviewRows.length,
     notifications: notifications.length,
-    saved: saved.length
+    saved: saved.length,
+    signupsByDay,
+    dataAsOf: new Date().toISOString()
   }
 }
 
