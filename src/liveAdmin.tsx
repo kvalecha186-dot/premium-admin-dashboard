@@ -1326,7 +1326,8 @@ export function LiveMessages() {
 export function LiveAnalytics() {
   const [d, setD] = useState<any>(null),
     [tab, setTab] = useState<'kpis' | 'geography' | 'activity'>('kpis'),
-    [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+    [lastUpdated, setLastUpdated] = useState<Date | null>(null),
+    [hoveredDay, setHoveredDay] = useState<string | null>(null)
   useLive((async () => {
     const result = await getAdminAnalytics()
     setLastUpdated(new Date())
@@ -1433,10 +1434,10 @@ export function LiveAnalytics() {
               {trend.map((day: any) => {
                 const total = day.learners + day.mentors
                 const height = total ? Math.max(5, total / maxSignups * 100) : 2
-                return <div key={day.date} title={day.date + ': ' + day.learners + ' learners, ' + day.mentors + ' mentors'} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', gap: 7 }}>
+                return <div key={day.date} title={day.date + ': ' + day.learners + ' learners, ' + day.mentors + ' mentors'} onMouseEnter={() => setHoveredDay(day.date)} onMouseLeave={() => setHoveredDay(null)} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', gap: 7, opacity: hoveredDay && hoveredDay !== day.date ? 0.55 : 1, transition: 'opacity .15s ease' }}>
                   <div style={{ color: total ? '#F4D67A' : '#626A85', fontSize: 10 }}>{total || ''}</div>
-                  <div style={{ width: '100%', height: height + '%', minHeight: 2, borderRadius: '4px 4px 1px 1px', background: total ? 'linear-gradient(180deg,#F4D67A,#A98019)' : 'rgba(255,255,255,.06)' }} />
-                  <div style={{ fontSize: 9, color: '#7E86A1', whiteSpace: 'nowrap', transform: 'rotate(-35deg)', transformOrigin: 'center' }}>{day.label}</div>
+                  <div style={{ width: '100%', height: height + '%', minHeight: 2, borderRadius: '4px 4px 1px 1px', background: total ? 'linear-gradient(180deg,#F4D67A,#A98019)' : 'rgba(255,255,255,.06)', outline: hoveredDay === day.date ? '1px solid #F4D67A' : 'none' }} />
+                  <div style={{ fontSize: 9, color: hoveredDay === day.date ? '#F4D67A' : '#7E86A1', whiteSpace: 'nowrap', transform: 'rotate(-35deg)', transformOrigin: 'center' }}>{day.label}</div>
                 </div>
               })}
             </div>
