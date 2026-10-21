@@ -420,30 +420,121 @@ function HeroStat(props: {
   )
 }
 
-// ── Secondary metric tile ────────────────────────────────────────────────────
-type Tile = { icon: string; label: string; value: number | null; format?: (n: number) => string; caption: string; meter?: number | null; tone?: string }
+// ── Engagement: minimal ring gauges ──────────────────────────────────────────
+function pl(n: number, one: string, many: string) {
+  return `${int(n)} ${n === 1 ? one : many}`
+}
 
-function MetricTile({ t }: { t: Tile }) {
+function Ring({ pct, center, unit }: { pct: number | null; center: string; unit?: string }) {
+  const id = useId().replace(/:/g, '')
+  const [p, setP] = useState(0)
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setP(pct ?? 0))
+    return () => cancelAnimationFrame(raf)
+  }, [pct])
+  const r = 50
+  const c = 2 * Math.PI * r
+  const empty = pct === null
+  const shown = Math.min(100, Math.max(0, p))
   return (
-    <Card style={{ padding: 20, position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div
-        aria-hidden="true"
-        style={{ position: 'absolute', right: -34, top: -34, width: 100, height: 100, borderRadius: '50%', background: 'radial-gradient(circle, rgba(212,175,55,.16), transparent 70%)', pointerEvents: 'none' }}
-      />
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <IconBadge d={t.icon} tone={t.tone} />
-        <span style={{ fontSize: 12.5, color: MUTED, fontWeight: 500 }}>{t.label}</span>
-      </div>
-      <div style={{ fontFamily: SERIF, fontSize: 32, fontWeight: 600, color: t.value === null ? FAINT : INK, lineHeight: 1.1 }}>
-        {t.value === null ? '—' : <CountUp value={t.value} format={t.format} />}
-      </div>
-      <div style={{ marginTop: 'auto' }}>
-        {t.meter !== undefined && t.meter !== null && (
-          <div style={{ height: 5, borderRadius: 99, background: 'rgba(255,255,255,.07)', overflow: 'hidden', marginBottom: 9 }}>
-            <div style={{ width: `${Math.max(2, Math.min(100, t.meter))}%`, height: '100%', borderRadius: 99, background: `linear-gradient(90deg, #B8901F, ${GOLD_L})`, transition: 'width .6s ease' }} />
+    <svg
+      viewBox="0 0 120 120"
+      width="132"
+      height="132"
+      aria-hidden="true"
+      style={{ overflow: 'visible', filter: empty ? 'none' : 'drop-shadow(0 0 12px rgba(212,175,55,.22))' }}
+    >
+      <defs>
+        <linearGradient id={`rg${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#B8901F" />
+          <stop offset="100%" stopColor={GOLD_L} />
+        </linearGradient>
+      </defs>
+      <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,.07)" strokeWidth="5" strokeLinecap="round" strokeDasharray={empty ? '1.5 7' : undefined} />
+      {!empty && (
+        <>
+          <circle
+            cx="60"
+            cy="60"
+            r={r}
+            fill="none"
+            stroke={`url(#rg${id})`}
+            strokeWidth="5"
+            strokeLinecap="round"
+            strokeDasharray={c}
+            strokeDashoffset={c * (1 - shown / 100)}
+            transform="rotate(-90 60 60)"
+            style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.22,.7,.35,1)' }}
+          />
+          <g style={{ transform: `rotate(${shown * 3.6}deg)`, transformOrigin: '60px 60px', transition: 'transform 1.1s cubic-bezier(.22,.7,.35,1)' }}>
+            <circle cx="60" cy="10" r="3.6" fill={GOLD_L} stroke="#0A0F28" strokeWidth="1.5" />
+          </g>
+        </>
+      )}
+      <text x="60" y={unit ? 62 : 67} textAnchor="middle" fontFamily={SERIF} fontSize="30" fontWeight="600" fill={empty ? FAINT : INK}>
+        {center}
+      </text>
+      {unit && (
+        <text x="60" y="81" textAnchor="middle" fontSize="9" letterSpacing="1.6" fill={DIM}>
+          {unit}
+        </text>
+      )}
+    </svg>
+  )
+}
+
+function EngagementPanel({ m }: { m: Metrics }) {
+  const activePct = m.learners ? Math.min(100, Math.round((m.active7 / m.learners) * 100)) : null
+  const items: { label: string; pct: number | null; center: string; unit?: string; caption: string }[] = [
+    {
+      label: 'Weekly active',
+      pct: activePct,
+      center: activePct === null ? '—' : `${activePct}%`,
+      caption: m.learners ? `${int(m.active7)} of ${pl(m.learners, 'learner', 'learners')} active` : 'No learners yet'
+    },
+    {
+      label: 'Average progress',
+      pct: m.avgProgress,
+      center: m.avgProgress === null ? '—' : `${m.avgProgress}%`,
+      caption: m.progressRecords ? `Across ${pl(m.progressRecords, 'progress record', 'progress records')}` : 'No progress recorded yet'
+    },
+    {
+      label: 'Path completion',
+      pct: m.completionRate,
+      center: m.completionRate === null ? '—' : `${m.completionRate}%`,
+      caption: m.progressRecords ? `${int(m.completedPaths)} of ${pl(m.progressRecords, 'path', 'paths')} completed` : 'No paths started yet'
+    },
+    {
+      label: 'Mentor rating',
+      pct: m.avgRating === null ? null : (m.avgRating / 5) * 100,
+      center: m.avgRating === null ? '—' : m.avgRating.toFixed(1),
+      unit: m.avgRating === null ? undefined : 'OUT OF 5',
+      caption: m.reviews ? pl(m.reviews, 'verified review', 'verified reviews') : 'No reviews yet'
+    }
+  ]
+  return (
+    <Card style={{ padding: 0, overflow: 'hidden' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 1, background: 'rgba(212,175,55,.13)' }}>
+        {items.map(it => (
+          <div
+            key={it.label}
+            style={{
+              background: 'linear-gradient(180deg, #0E1638 0%, #0A0F28 100%)',
+              padding: '32px 18px 28px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              gap: 18
+            }}
+          >
+            <Ring pct={it.pct} center={it.center} unit={it.unit} />
+            <div>
+              <div style={{ fontSize: 11.5, letterSpacing: '.16em', textTransform: 'uppercase', color: GOLD, fontWeight: 600 }}>{it.label}</div>
+              <div style={{ fontSize: 12.5, color: DIM, marginTop: 7 }}>{it.caption}</div>
+            </div>
           </div>
-        )}
-        <div style={{ fontSize: 12, color: DIM, lineHeight: 1.45 }}>{t.caption}</div>
+        ))}
       </div>
     </Card>
   )
@@ -767,17 +858,6 @@ export function AnalyticsDashboard() {
     )
   }
 
-  const tiles: Tile[] = [
-    { icon: icons.activity, label: 'Active in 7 days', value: m.active7, caption: m.learners ? `${Math.min(100, Math.round((m.active7 / m.learners) * 100))}% of learners showed recent activity` : 'Unique users with recent progress activity', meter: m.learners ? (m.active7 / m.learners) * 100 : null },
-    { icon: icons.target, label: 'Average progress', value: m.avgProgress, format: n => `${Math.round(n)}%`, caption: `Across ${int(m.progressRecords)} progress ${m.progressRecords === 1 ? 'record' : 'records'}`, meter: m.avgProgress },
-    { icon: icons.award, label: 'Completed paths', value: m.completedPaths, caption: m.completionRate !== null ? `${m.completionRate}% completion rate` : 'No progress records yet', meter: m.completionRate },
-    { icon: icons.sparkles, label: 'Total XP earned', value: m.totalXp, caption: 'Recorded across all progress rows' },
-    { icon: icons.star, label: 'Average rating', value: m.avgRating, format: n => n.toFixed(1), caption: `${int(m.reviews)} verified ${m.reviews === 1 ? 'review' : 'reviews'}`, meter: m.avgRating !== null ? (m.avgRating / 5) * 100 : null },
-    { icon: icons.tag, label: 'Saved resources', value: m.saved, caption: 'Items bookmarked by learners' },
-    { icon: icons.bell, label: 'Notifications sent', value: m.notifications, caption: 'Generated by the platform' },
-    { icon: icons.layers, label: 'Growth paths', value: m.pathsCount, caption: 'Learning journeys available' }
-  ]
-
   const statusTotal = m.statusSegments.reduce((s, x) => s + x.value, 0)
   const maxBucket = Math.max(...m.buckets, 1)
   const bucketLabels = ['0–24%', '25–49%', '50–74%', '75–99%', 'Completed']
@@ -867,9 +947,7 @@ export function AnalyticsDashboard() {
 
         {/* ── Engagement & quality ── */}
         <SectionHead eyebrow="Executive summary" title="Engagement & quality" hint="How learners are progressing and how the platform is perceived." />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 16 }}>
-          {tiles.map(t => <MetricTile key={t.label} t={t} />)}
-        </div>
+        <EngagementPanel m={m} />
 
         {/* ── Momentum ── */}
         <SectionHead eyebrow="Momentum" title="Growth over the last 12 weeks" hint="New learner sign-ups and bookings created per week." />
