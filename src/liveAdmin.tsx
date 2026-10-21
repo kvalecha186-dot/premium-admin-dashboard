@@ -6,7 +6,6 @@ import {
   getAdminMentors,
   getAdminPaths,
   getAdminExplore,
-  getAdminAnalytics,
   getBookingsNamed,
   getConversationsNamed,
   type AdminUser,
@@ -20,8 +19,7 @@ import {
 } from './growthPathFilter'
 import { LearnerDetailDrawer } from './users/LearnerDetailDrawer'
 import { MentorDetailDrawer } from './mentors/MentorDetailDrawer'
-import { GeographyAnalyticsView } from './analytics/GeographyAnalyticsView'
-import { UserActivityView } from './analytics/UserActivityView'
+import { AnalyticsDashboard } from './analytics/AnalyticsDashboard'
 import { signIn, signOutAdmin, requireAdmin, signInAsAdminDemo } from './lib/supabase'
 import { fetchLiveLogins, subscribeToLiveLogins, type UserLoginEvent } from './lib/loginAudit'
 
@@ -1323,148 +1321,10 @@ export function LiveMessages() {
   )
 }
 
+// Analytics & Intelligence now lives in analytics/AnalyticsDashboard.tsx:
+// one unified page (executive summary + geography), computed from live records.
 export function LiveAnalytics() {
-  const [d, setD] = useState<any>(null),
-    [tab, setTab] = useState<'kpis' | 'geography' | 'activity'>('kpis'),
-    [lastUpdated, setLastUpdated] = useState<Date | null>(null),
-    [hoveredDay, setHoveredDay] = useState<string | null>(null)
-  useLive((async () => {
-    const result = await getAdminAnalytics()
-    setLastUpdated(new Date())
-    return result
-  }), setD, undefined, 30000)
-
-  if (!d)
-    return (
-      <PageShell title="Analytics" subtitle="A transparent view of activity recorded by Starfix.">
-        <Card style={{ padding: 24, color: '#9AA0BA' }}>Loading verified database metrics…</Card>
-      </PageShell>
-    )
-
-  const number = (n: unknown) => Number(n || 0).toLocaleString('en-IN')
-  const money = (n: unknown) => '₹' + Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })
-  const rating = d.avgRating === null ? '—' : String(d.avgRating) + '★'
-  const cards = [
-    { label: 'Learners', value: number(d.students), detail: 'Profiles with learner role', icon: '♙' },
-    { label: 'Mentors', value: number(d.mentors), detail: number(d.mentorListings) + ' mentor records', icon: '✧' },
-    { label: 'Active mentees', value: number(d.activeMentees), detail: 'Unique learners with confirmed/completed bookings', icon: '↗' },
-    { label: 'Active in 7 days', value: number(d.active7), detail: 'Unique users with recent progress activity', icon: '◷' },
-    { label: 'Average progress', value: d.progressRecords ? d.avgProgress + '%' : '—', detail: number(d.progressRecords) + ' progress records', icon: '◌' },
-    { label: 'Completed records', value: number(d.completed), detail: 'Progress at 100%', icon: '✓' },
-    { label: 'Total XP', value: number(d.totalXp), detail: 'XP recorded in progress rows', icon: '✦' },
-    { label: 'Bookings', value: number(d.bookings), detail: number(d.confirmed) + ' confirmed or completed', icon: '▦' },
-    { label: 'Recognised revenue', value: money(d.revenue), detail: 'Amounts on confirmed/completed bookings only', icon: '₹' },
-    { label: 'Reviews', value: number(d.reviews), detail: 'Average rating: ' + rating, icon: '☆' },
-    { label: 'Saved items', value: number(d.saved), detail: 'Saved-item records', icon: '◇' },
-    { label: 'Notifications', value: number(d.notifications), detail: 'Notification records', icon: '♧' },
-    { label: 'Administrators', value: number(d.admins), detail: 'Profiles with admin role', icon: '⬡' }
-  ]
-  const trend = Array.isArray(d.signupsByDay) ? d.signupsByDay : []
-  const maxSignups = Math.max(1, ...trend.map((x: any) => x.learners + x.mentors))
-
-  return (
-    <PageShell
-      title="Analytics & Intelligence"
-      subtitle="A clear, database-backed view of Starfix growth, engagement and mentorship activity."
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
-        <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
-          {[
-            { id: 'kpis', label: '✦ Executive summary' },
-            { id: 'geography', label: '🌍 User geography' },
-            { id: 'activity', label: '⚡ Activity & retention' }
-          ].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id as any)} style={{
-              ...btn, padding: '10px 15px', fontWeight: tab === t.id ? 650 : 450,
-              color: tab === t.id ? '#070A1A' : '#B8BED4',
-              background: tab === t.id ? 'linear-gradient(135deg,#F4D67A,#D4AF37)' : 'rgba(255,255,255,.035)',
-              borderColor: tab === t.id ? 'transparent' : 'rgba(212,175,55,.18)'
-            }}>{t.label}</button>
-          ))}
-        </div>
-        <div style={{ fontSize: 11.5, color: '#8A90AB' }}>
-          <span style={{ color: '#4ADE80' }}>●</span> Database-derived · Refreshes every 30 seconds
-        </div>
-      </div>
-
-      {tab === 'geography' && <GeographyAnalyticsView />}
-      {tab === 'activity' && <UserActivityView />}
-      {tab === 'kpis' && <>
-        <Card style={{ padding: 22, marginBottom: 18, background: 'linear-gradient(115deg,rgba(19,29,65,.96),rgba(10,14,32,.94))', borderColor: 'rgba(212,175,55,.24)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ fontSize: 11, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '.14em', fontWeight: 700 }}>Starfix platform pulse</div>
-              <div style={{ fontFamily: 'Playfair Display,serif', fontSize: 25, color: '#F7EFD8', marginTop: 7 }}>Measure what is actually happening.</div>
-              <div style={{ fontSize: 12.5, lineHeight: 1.7, color: '#9AA0BA', marginTop: 7, maxWidth: 650 }}>
-                Counts below are calculated from persisted Supabase records. Empty data is shown as zero or unavailable—not replaced with sample numbers.
-              </div>
-            </div>
-            <div style={{ border: '1px solid rgba(212,175,55,.2)', borderRadius: 12, padding: '10px 13px', minWidth: 145 }}>
-              <div style={{ color: '#8A90AB', fontSize: 11 }}>Latest calculation</div>
-              <div style={{ color: '#F4D67A', fontSize: 13, marginTop: 5 }}>{lastUpdated ? lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Just loaded'}</div>
-              <div style={{ color: '#8A90AB', fontSize: 10.5, marginTop: 3 }}>India Standard Time</div>
-            </div>
-          </div>
-        </Card>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(205px,1fr))', gap: 13 }}>
-          {cards.map((item, index) => (
-            <Card key={item.label} style={{ padding: 19, minHeight: 135, position: 'relative', overflow: 'hidden', borderColor: 'rgba(212,175,55,.14)', background: 'linear-gradient(145deg,rgba(17,25,55,.94),rgba(8,12,29,.98))' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                <div style={{ fontSize: 12, color: '#A7AEC5', fontWeight: 550 }}>{item.label}</div>
-                <div style={{ width: 29, height: 29, borderRadius: 9, display: 'grid', placeItems: 'center', color: '#F4D67A', background: 'rgba(212,175,55,.09)', border: '1px solid rgba(212,175,55,.14)', fontSize: 15 }}>{item.icon}</div>
-              </div>
-              <div style={{ fontFamily: 'Playfair Display,serif', fontSize: 31, fontWeight: 600, letterSpacing: '-.02em', color: '#F4D67A', marginTop: 13, lineHeight: 1.1 }}>{item.value}</div>
-              <div style={{ color: '#858DA9', fontSize: 11.5, lineHeight: 1.5, marginTop: 9 }}>{item.detail}</div>
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg,rgba(212,175,55,' + (index % 3 === 0 ? '.7' : '.25') + '),transparent)' }} />
-            </Card>
-          ))}
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.4fr) minmax(260px,1fr)', gap: 14, marginTop: 16 }}>
-          <Card style={{ padding: 21, borderColor: 'rgba(212,175,55,.16)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-              <div>
-                <div style={{ color: '#F7EFD8', fontSize: 15, fontWeight: 650 }}>New registrations</div>
-                <div style={{ color: '#8A90AB', fontSize: 11.5, marginTop: 4 }}>Last 14 days · learner and mentor records</div>
-              </div>
-              <div style={{ fontSize: 11, color: '#9AA0BA' }}>Daily</div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'stretch', gap: 7, height: 142, marginTop: 20, paddingBottom: 4 }}>
-              {trend.map((day: any) => {
-                const total = day.learners + day.mentors
-                const height = total ? Math.max(5, total / maxSignups * 100) : 2
-                return <div key={day.date} title={day.date + ': ' + day.learners + ' learners, ' + day.mentors + ' mentors'} onMouseEnter={() => setHoveredDay(day.date)} onMouseLeave={() => setHoveredDay(null)} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', gap: 7, opacity: hoveredDay && hoveredDay !== day.date ? 0.55 : 1, transition: 'opacity .15s ease' }}>
-                  <div style={{ color: total ? '#F4D67A' : '#626A85', fontSize: 10 }}>{total || ''}</div>
-                  <div style={{ width: '100%', height: height + '%', minHeight: 2, borderRadius: '4px 4px 1px 1px', background: total ? 'linear-gradient(180deg,#F4D67A,#A98019)' : 'rgba(255,255,255,.06)', outline: hoveredDay === day.date ? '1px solid #F4D67A' : 'none' }} />
-                  <div style={{ fontSize: 9, color: hoveredDay === day.date ? '#F4D67A' : '#7E86A1', whiteSpace: 'nowrap', transform: 'rotate(-35deg)', transformOrigin: 'center' }}>{day.label}</div>
-                </div>
-              })}
-            </div>
-            <div style={{ display: 'flex', gap: 14, marginTop: 9, fontSize: 11, color: '#9AA0BA' }}>
-              <span><span style={{ color: '#F4D67A' }}>■</span> Learners + mentors</span>
-              <span>Zero bars mean no new records that day</span>
-            </div>
-          </Card>
-          <Card style={{ padding: 21, borderColor: 'rgba(212,175,55,.16)' }}>
-            <div style={{ color: '#F7EFD8', fontSize: 15, fontWeight: 650 }}>Data integrity notes</div>
-            <div style={{ color: '#8A90AB', fontSize: 11.5, marginTop: 4 }}>How to read these numbers</div>
-            <div style={{ display: 'grid', gap: 13, marginTop: 18 }}>
-              {[
-                ['Real records only', 'No hard-coded learner, mentor, rating or progress totals.'],
-                ['Revenue definition', 'Only amounts from confirmed or completed bookings are included.'],
-                ['Activity definition', '7-day activity is based on recorded progress activity, not page views.'],
-                ['Missing data', 'A dash means no rating data exists yet; zero means no matching records.']
-              ].map(([title, body]) => <div key={title} style={{ display: 'flex', gap: 10 }}>
-                <div style={{ width: 5, borderRadius: 5, background: '#D4AF37', flexShrink: 0 }} />
-                <div><div style={{ color: '#E8D8A5', fontSize: 12, fontWeight: 650 }}>{title}</div><div style={{ color: '#8A90AB', fontSize: 11.5, lineHeight: 1.55, marginTop: 3 }}>{body}</div></div>
-              </div>)}
-            </div>
-          </Card>
-        </div>
-      </>}
-    </PageShell>
-  )
+  return <AnalyticsDashboard />
 }
 
 export function AdminHeader({ onMenu }: { profile?: any; onMenu?: () => void }) {
