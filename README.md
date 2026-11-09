@@ -35,7 +35,7 @@ The dashboard is designed around the data and workflows of Starfix rather than b
 
 ## How it fits into Starfix
 
-\`\`\`text
+```text
                  Starfix Platform
                         |
              +----------+----------+
@@ -48,7 +48,7 @@ The dashboard is designed around the data and workflows of Starfix rather than b
                         |
                  Shared platform data
                    and backend APIs
-\`\`\`
+```
 
 The admin app reads platform information through its data-access layer. The code includes database-backed queries and RPC calls for overview, learner and mentor information, along with login-audit data.
 
@@ -62,31 +62,31 @@ A note on the current state: some analytics modules also contain generated/sampl
 
 ### Setup
 
-\`\`\`bash
+```bash
 git clone https://github.com/kvalecha186-dot/premium-admin-dashboard.git
 cd premium-admin-dashboard
 npm install
 npm run dev
-\`\`\`
+```
 
 Create a production build:
 
-\`\`\`bash
+```bash
 npm run build
-\`\`\`
+```
 
-The application uses the configuration in its data-access layer to connect to the Starfix backend. Check the files under \`src/lib/\` before setting up a local environment. Keep private keys and service credentials out of the repository.
+The application uses the configuration in its data-access layer to connect to the Starfix backend. Check the files under `src/lib/` before setting up a local environment. Keep private keys and service credentials out of the repository.
 
 ## Project structure
 
 A few useful areas of the codebase:
 
-- \`src/adminBackend.ts\` — admin-facing data operations and platform queries.
-- \`src/liveAdmin.tsx\` — live admin views, refresh logic and access gate.
-- \`src/analytics/\` — analytics dashboard and visualisation modules.
-- \`src/users/\` — learner list and detail views.
-- \`src/mentors/\` — mentor management views.
-- \`src/lib/\` — backend access, authentication and login-audit helpers.
+- `src/adminBackend.ts` — admin-facing data operations and platform queries.
+- `src/liveAdmin.tsx` — live admin views, refresh logic and access gate.
+- `src/analytics/` — analytics dashboard and visualisation modules.
+- `src/users/` — learner list and detail views.
+- `src/mentors/` — mentor management views.
+- `src/lib/` — backend access, authentication and login-audit helpers.
 
 ## Current development priorities
 
