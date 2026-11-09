@@ -55,22 +55,22 @@ export async function getAdminOverview() {
     // Graceful fallback to real counts from tables and logins
     const [profCount, mentCount, bkCount, pathCount, logins] = await Promise.all([
       db('profiles?select=id').then(r => r?.length || 0).catch(() => 0),
-      db('public_mentor_directory?select=id').then(r => r?.length || 10).catch(() => 10),
+      db('public_mentor_directory?select=id').then(r => r?.length || 0).catch(() => 0),
       db('bookings?select=id').then(r => r?.length || 0).catch(() => 0),
-      db('growth_paths?select=id').then(r => r?.length || 5).catch(() => 5),
+      db('growth_paths?select=id').then(r => r?.length || 0).catch(() => 0),
       fetchLiveLogins().catch(() => [])
     ])
     m = {
       registered_learners: Math.max(profCount, logins.length),
       mentor_listings: mentCount,
       registered_mentors: mentCount,
-      active_mentees: Math.min(profCount, 2),
+      active_mentees: 0,
       total_bookings: bkCount,
       completed_sessions: 0,
-      verified_reviews: 12,
+      verified_reviews: 0,
       growth_paths: pathCount,
-      progress_records: Math.max(profCount, 1),
-      explore_items: 8
+      progress_records: 0,
+      explore_items: 0
     }
   }
 
@@ -87,13 +87,13 @@ export async function getAdminOverview() {
 
   return {
     learners: Number(m.registered_learners) || 0,
-    mentors: Number(m.mentor_listings) || 10,
-    registeredMentors: Number(m.registered_mentors) || 10,
+    mentors: Number(m.mentor_listings) || 0,
+    registeredMentors: Number(m.registered_mentors) || 0,
     activeMentees: Number(m.active_mentees) || 0,
     bookings: Number(m.total_bookings) || 0,
     completedSessions: Number(m.completed_sessions) || 0,
     reviews: Number(m.verified_reviews) || 0,
-    paths: Number(m.growth_paths) || 5,
+    paths: Number(m.growth_paths) || 0,
     progressRecords: Number(m.progress_records) || 0,
     exploreItems: Number(m.explore_items) || 0,
     activeLearners,
