@@ -1,6 +1,6 @@
 const URL = import.meta.env.VITE_SUPABASE_URL || 'https://mndyaxvkjzzgyvfrxgvm.supabase.co'
 const KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_oSRryTseVP0tCs0kSTeWCQ_wG1ydebQ'
-const ACCESS = 'starfix_admin_access', REFRESH = 'starfix_admin_refresh', DEMO_ADMIN = 'starfix_demo_admin'
+const ACCESS = 'starfix_admin_access', REFRESH = 'starfix_admin_refresh'
 
 type Auth = { access_token: string; refresh_token: string; expires_at?: number; user?: any }
 
@@ -97,44 +97,15 @@ export async function signIn(email: string, password: string) {
     )
   }
   save(j)
-  localStorage.removeItem(DEMO_ADMIN)
   return j
-}
-
-export async function signInAsAdminDemo() {
-  localStorage.setItem(DEMO_ADMIN, 'true')
-  return {
-    user: { id: 'admin_master', email: 'kvalecha186@gmail.com' },
-    profile: {
-      id: 'admin_master',
-      full_name: 'Kunal Valecha (Admin)',
-      email: 'kvalecha186@gmail.com',
-      role: 'admin'
-    }
-  }
 }
 
 export async function signOutAdmin() {
   localStorage.removeItem(ACCESS)
   localStorage.removeItem(REFRESH)
-  localStorage.removeItem(DEMO_ADMIN)
 }
 
 export async function requireAdmin(): Promise<{ user: any; profile: any; error: Error | null }> {
-  // Check demo admin bypass
-  if (typeof window !== 'undefined' && localStorage.getItem(DEMO_ADMIN) === 'true') {
-    return {
-      user: { id: 'admin_master', email: 'kvalecha186@gmail.com' },
-      profile: {
-        id: 'admin_master',
-        full_name: 'Kunal Valecha',
-        email: 'kvalecha186@gmail.com',
-        role: 'admin'
-      },
-      error: null
-    }
-  }
-
   const t = await token()
   if (!t) {
     return { user: null, profile: null, error: new Error('Not signed in') }
@@ -152,16 +123,9 @@ export async function requireAdmin(): Promise<{ user: any; profile: any; error: 
     ).catch(() => [])
     const profile = rows?.[0]
 
-    // If profile exists with admin role, or email is known admin
-    const isAdminEmail = (user.email || '').toLowerCase().includes('kvalecha') || (user.email || '').toLowerCase().includes('admin')
-    if (profile?.role === 'admin' || isAdminEmail) {
-      const activeProfile = profile || {
-        id: user.id,
-        full_name: user.user_metadata?.full_name || (user.email || '').split('@')[0],
-        email: user.email,
-        role: 'admin'
-      }
-      return { user, profile: activeProfile, error: null }
+    // Access is granted only when the trusted profile record explicitly has the admin role.
+    if (profile?.role === 'admin') {
+      return { user, profile, error: null }
     }
 
     await signOutAdmin()
