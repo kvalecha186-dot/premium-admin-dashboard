@@ -52,7 +52,7 @@ The dashboard is designed around the data and workflows of Starfix rather than b
 
 The admin app reads platform information through its data-access layer. The code includes database-backed queries and RPC calls for overview, learner and mentor information, along with login-audit data.
 
-A note on the current state: some analytics modules also contain generated/sample datasets and some fallback values for cases where data is unavailable. Those values are useful while building and previewing the interface, but they should not be treated as verified live business metrics. The data source for each metric needs to be checked before using the dashboard for real operational decisions.
+A note on the current state: some analytics modules still contain generated/sample datasets. The overview now avoids inventing fallback counts when its primary metrics query fails, but a displayed zero can still mean that data is unavailable rather than that the real count is zero. Check the data source and loading/error state before using dashboard figures for operational decisions.
 
 ## Run locally
 
