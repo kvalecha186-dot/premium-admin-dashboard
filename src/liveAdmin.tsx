@@ -20,7 +20,7 @@ import {
 import { LearnerDetailDrawer } from './users/LearnerDetailDrawer'
 import { MentorDetailDrawer } from './mentors/MentorDetailDrawer'
 import { AnalyticsDashboard } from './analytics/AnalyticsDashboard'
-import { signIn, signOutAdmin, requireAdmin, signInAsAdminDemo } from './lib/supabase'
+import { signIn, signOutAdmin, requireAdmin } from './lib/supabase'
 import { fetchLiveLogins, subscribeToLiveLogins, type UserLoginEvent } from './lib/loginAudit'
 
 // Re-fetch live data every 10s so the admin always reflects the Starfix website instantly.
@@ -172,39 +172,6 @@ export function AdminGate({ children }: { children: React.ReactNode }) {
           <div style={{ color: '#A7A7A7', fontSize: 13, margin: '6px 0 20px' }}>
             Growth Operations · Live Platform Intelligence
           </div>
-
-          {/* Quick 1-Click Access for Owner */}
-          <button
-            type="button"
-            onClick={async () => {
-              setBusy(true)
-              try {
-                await signInAsAdminDemo()
-                setState('ok')
-              } finally {
-                setBusy(false)
-              }
-            }}
-            style={{
-              width: '100%',
-              padding: '12px 14px',
-              borderRadius: 10,
-              border: '1px solid rgba(212,175,55,.4)',
-              background: 'rgba(212,175,55,.12)',
-              color: '#F4D67A',
-              fontWeight: 700,
-              fontSize: 13,
-              cursor: 'pointer',
-              marginBottom: 18,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <span>✦ Enter as Starfix Administrator (Kunal Valecha)</span>
-          </button>
 
           <div
             style={{
