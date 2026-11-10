@@ -107,80 +107,86 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
   try {
     metrics = await rpc<any[]>('get_admin_learner_metrics')
   } catch {
-    // If RPC fails (e.g. 401 permission denied), fetch directly from profiles table
-    const profiles = await db('profiles?select=id,full_name,email,avatar_url,country,career_goal,level,goal_title,created_at,updated_at,last_sign_in_at').catch(() => [])
+    // A missing RPC must not be replaced with invented engagement metrics.
+    const profiles = await db('profiles?select=id,full_name,email,avatar_url,country,career_goal,level,goal_title,created_at,updated_at,last_sign_in_at&role=eq.student').catch(() => [])
     metrics = (profiles || []).map((p: any) => ({
       learner_id: p.id,
       name: p.full_name || (p.email || '').split('@')[0] || 'Learner',
       email: p.email || '',
-      country: p.country || 'India',
-      career_goal: p.career_goal || p.goal_title || 'Software Engineering',
-      level: p.level || 'Intermediate',
-      max_streak: 1,
-      total_xp: 120,
-      average_progress: 20,
+      avatar: p.avatar_url || null,
+      country: p.country || null,
+      career_goal: p.career_goal || p.goal_title || null,
+      level: p.level || null,
+      max_streak: 0,
+      total_xp: 0,
+      average_progress: 0,
       last_active_date: p.last_sign_in_at || p.updated_at || p.created_at,
-      learner_status: 'Active'
     }))
   }
 
-  // Also merge live login events so any user who signed in on Starfix website appears immediately
   const liveLogins = await fetchLiveLogins().catch(() => [])
   const loginByEmail = new Map<string, UserLoginEvent>()
   liveLogins.forEach(l => {
-    if (!loginByEmail.has(l.email.toLowerCase())) {
-      loginByEmail.set(l.email.toLowerCase(), l)
-    }
+    if (!loginByEmail.has(l.email.toLowerCase())) loginByEmail.set(l.email.toLowerCase(), l)
   })
 
   const progress = await db('user_progress?select=user_id,overall_progress,streak,xp,last_active_date,path_id,growth_paths(title,category)&limit=5000').catch(() => [])
   const by = new Map<string, any[]>()
   progress.forEach((p: any) => by.set(p.user_id, [...(by.get(p.user_id) || []), p]))
 
+  const statusFor = (date?: string | null): AdminUser['status'] => {
+    if (!date || !Number.isFinite(Date.parse(date))) return 'Inactive'
+    const age = Date.now() - Date.parse(date)
+    if (age <= 7 * 86400000) return 'Active'
+    if (age <= 30 * 86400000) return 'At risk'
+    return 'Inactive'
+  }
+
   const list: AdminUser[] = (metrics || []).map((p: any) => {
     const rows = by.get(p.learner_id) || []
     const current = rows[0]
     const live = loginByEmail.get((p.email || '').toLowerCase())
+    const lastActive = live?.timestamp || p.last_active_date || null
     return {
       id: p.learner_id,
       name: p.name || 'Unnamed learner',
       email: p.email || '',
-      avatar: null,
-      country: p.country || live?.location || 'India',
-      goal: p.career_goal || 'Coding & Tech',
-      level: p.level || 'Intermediate',
-      path: current?.growth_paths?.title || 'Coding',
-      category: current?.growth_paths?.category || 'Career & Tech',
-      streak: Number(p.max_streak) || 1,
-      xp: Number(p.total_xp) || 120,
-      progress: Number(p.average_progress) || 20,
-      lastActive: live?.timestamp || p.last_active_date,
-      status: 'Active',
-      lastLoginMethod: live?.loginMethod || 'Email & Password',
+      avatar: p.avatar || null,
+      country: p.country || live?.location || null,
+      goal: p.career_goal || 'Not set',
+      level: p.level || 'Not set',
+      path: current?.growth_paths?.title || 'No active path',
+      category: current?.growth_paths?.category || 'Not categorized',
+      streak: Number(p.max_streak) || 0,
+      xp: Number(p.total_xp) || 0,
+      progress: Number(p.average_progress) || 0,
+      lastActive,
+      status: statusFor(lastActive),
+      lastLoginMethod: live?.loginMethod,
       lastLoginDevice: live?.device,
       lastLoginIp: live?.ipAddress
     }
   })
 
-  // If a live login happened from an account not yet in metrics, append it seamlessly
+  // Login telemetry is displayed only as activity; no synthetic profile or progress values are added.
   liveLogins.forEach(l => {
     const exists = list.some(u => u.email.toLowerCase() === l.email.toLowerCase() || u.id === l.userId)
     if (!exists) {
       list.unshift({
         id: l.userId,
-        name: l.name,
+        name: l.name || 'Unmatched account',
         email: l.email,
         avatar: null,
-        country: l.location,
-        goal: 'Executive Growth',
-        level: 'Intermediate',
-        path: 'Coding & Mentorship',
-        category: 'Career & Tech',
-        streak: 1,
-        xp: 150,
-        progress: 15,
+        country: l.location || null,
+        goal: 'Not set',
+        level: 'Not set',
+        path: 'No active path',
+        category: 'Not categorized',
+        streak: 0,
+        xp: 0,
+        progress: 0,
         lastActive: l.timestamp,
-        status: 'Active',
+        status: statusFor(l.timestamp),
         lastLoginMethod: l.loginMethod,
         lastLoginDevice: l.device,
         lastLoginIp: l.ipAddress
@@ -196,7 +202,6 @@ export async function getAdminMentors(): Promise<AdminMentor[]> {
   try {
     data = await rpc<any[]>('get_admin_mentor_metrics')
   } catch {
-    // If RPC fails, read from public_mentor_directory (verified working) or mentors table
     data = await db('public_mentor_directory?select=*').catch(() => db('mentors?select=*')).catch(() => [])
   }
 
@@ -205,24 +210,24 @@ export async function getAdminMentors(): Promise<AdminMentor[]> {
     profileId: m.profile_id || null,
     name: m.name || 'Unnamed mentor',
     email: m.email || null,
-    headline: m.headline || m.title || 'Senior Specialist',
-    company: m.company || 'Tech Leader',
-    category: m.category || 'Engineering',
-    rating: Number(m.verified_review_rating ?? m.catalog_rating ?? m.rating) || 5.0,
-    catalogRating: Number(m.catalog_rating ?? m.rating) || 5.0,
-    verifiedReviewRating: Number(m.verified_review_rating ?? m.rating) || 5.0,
-    students: Number(m.active_mentees ?? m.students_count) || 850,
-    activeMentees: Number(m.active_mentees ?? m.students_count) || 850,
-    reviewCount: Number(m.review_count) || 24,
-    totalBookings: Number(m.total_bookings) || 18,
-    completedSessions: Number(m.completed_sessions) || 15,
-    availability: m.availability || 'Today',
-    onboarding: true,
-    location: m.location || 'Remote',
-    education: m.education || 'Graduate',
+    headline: m.headline || m.title || 'Not provided',
+    company: m.company || null,
+    category: m.category || 'Uncategorized',
+    rating: Number(m.verified_review_rating ?? m.catalog_rating ?? m.rating) || 0,
+    catalogRating: Number(m.catalog_rating ?? m.rating) || 0,
+    verifiedReviewRating: m.verified_review_rating == null ? null : Number(m.verified_review_rating),
+    students: Number(m.active_mentees ?? m.students_count) || 0,
+    activeMentees: Number(m.active_mentees ?? m.students_count) || 0,
+    reviewCount: Number(m.review_count) || 0,
+    totalBookings: Number(m.total_bookings) || 0,
+    completedSessions: Number(m.completed_sessions) || 0,
+    availability: m.availability || 'Not provided',
+    onboarding: Boolean(m.onboarding_completed),
+    location: m.location || null,
+    education: m.education || null,
     linkedinUrl: m.linkedin_url || '',
-    mentorStatus: m.mentor_status || 'Active',
-    performanceBand: m.performance_band || 'Established'
+    mentorStatus: m.mentor_status || 'Unverified',
+    performanceBand: m.performance_band || 'Not assessed'
   }))
 }
 
