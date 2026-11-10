@@ -52,25 +52,27 @@ export async function getAdminOverview() {
     const metrics = await rpc<any[]>('get_admin_overview_metrics')
     m = metrics?.[0] || {}
   } catch {
-    // Graceful fallback to real counts from tables and logins
-    const [profCount, mentCount, bkCount, pathCount, logins] = await Promise.all([
-      db('profiles?select=id').then(r => r?.length || 0).catch(() => 0),
-      db('public_mentor_directory?select=id').then(r => r?.length || 0).catch(() => 0),
-      db('bookings?select=id').then(r => r?.length || 0).catch(() => 0),
-      db('growth_paths?select=id').then(r => r?.length || 0).catch(() => 0),
-      fetchLiveLogins().catch(() => [])
+    // Use actual records only when the metrics RPC is unavailable.
+    const [profiles, mentors, bookings, paths, reviews, progress, explore] = await Promise.all([
+      db('profiles?select=id&role=eq.student').catch(() => []),
+      db('public_mentor_directory?select=id,profile_id').catch(() => []),
+      db('bookings?select=id,status,student_id').catch(() => []),
+      db('growth_paths?select=id').catch(() => []),
+      db('reviews?select=id').catch(() => []),
+      db('user_progress?select=id').catch(() => []),
+      db('explore_content?select=id&active=eq.true').catch(() => [])
     ])
     m = {
-      registered_learners: Math.max(profCount, logins.length),
-      mentor_listings: mentCount,
-      registered_mentors: mentCount,
-      active_mentees: 0,
-      total_bookings: bkCount,
-      completed_sessions: 0,
-      verified_reviews: 0,
-      growth_paths: pathCount,
-      progress_records: 0,
-      explore_items: 0
+      registered_learners: profiles.length,
+      mentor_listings: mentors.length,
+      registered_mentors: mentors.filter((x: any) => x.profile_id).length,
+      active_mentees: new Set(bookings.filter((x: any) => x.status === 'confirmed').map((x: any) => x.student_id).filter(Boolean)).size,
+      total_bookings: bookings.length,
+      completed_sessions: bookings.filter((x: any) => x.status === 'completed').length,
+      verified_reviews: reviews.length,
+      growth_paths: paths.length,
+      progress_records: progress.length,
+      explore_items: explore.length
     }
   }
 
@@ -80,10 +82,12 @@ export async function getAdminOverview() {
     fetchLiveLogins().catch(() => [])
   ])
 
-  const activeLearners = Math.max(
-    progress.filter((p: any) => p.last_active_date && Date.parse(p.last_active_date) >= Date.now() - 7 * 86400000).length,
-    liveLogins.filter(l => Date.parse(l.timestamp) >= Date.now() - 7 * 86400000).length
-  )
+  const activeLearners = new Set(
+    progress
+      .filter((p: any) => p.last_active_date && Date.parse(p.last_active_date) >= Date.now() - 7 * 86400000)
+      .map((p: any) => p.user_id)
+      .filter(Boolean)
+  ).size
 
   return {
     learners: Number(m.registered_learners) || 0,
