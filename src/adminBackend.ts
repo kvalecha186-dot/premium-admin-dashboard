@@ -216,7 +216,7 @@ export async function getAdminMentors(): Promise<AdminMentor[]> {
     headline: m.headline || m.title || 'Not provided',
     company: m.company || null,
     category: m.category || 'Uncategorized',
-    rating: Number(m.verified_review_rating ?? m.catalog_rating ?? m.rating) || 0,
+    rating: m.verified_review_rating == null ? 0 : Number(m.verified_review_rating),
     catalogRating: Number(m.catalog_rating ?? m.rating) || 0,
     verifiedReviewRating: m.verified_review_rating == null ? null : Number(m.verified_review_rating),
     students: Number(m.active_mentees ?? m.students_count) || 0,
