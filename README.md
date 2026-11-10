@@ -1,4 +1,18 @@
-# Starfix Admin Dashboard
+<div align="center">
+
+# 🛰️ Starfix Admin Dashboard
+### *The operations side of the Starfix mentorship platform*
+
+[![Live Preview](https://img.shields.io/badge/Live_Preview-Vercel-black?style=for-the-badge&logo=vercel)](https://premium-admin-dashboard.vercel.app)
+[![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript_5.7-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite_8-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS_v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+
+[Live Preview](https://premium-admin-dashboard.vercel.app) · [Main App: Starfix Website](https://github.com/kvalecha186-dot/Starfix-Website) · [Run locally](#run-locally)
+
+</div>
+
 
 This is the admin side of **Starfix**, my mentorship and personal-growth platform.
 
