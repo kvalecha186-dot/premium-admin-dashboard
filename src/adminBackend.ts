@@ -76,10 +76,9 @@ export async function getAdminOverview() {
     }
   }
 
-  const [recent, progress, liveLogins] = await Promise.all([
+  const [recent, progress] = await Promise.all([
     db('bookings?select=id,status,scheduled_start,amount,mentor_name,session_type&order=created_at.desc&limit=8').catch(() => []),
-    db('user_progress?select=user_id,overall_progress,streak,xp,last_active_date,path_id,growth_paths(title,category)&limit=1000').catch(() => []),
-    fetchLiveLogins().catch(() => [])
+    db('user_progress?select=user_id,overall_progress,streak,xp,last_active_date,path_id,growth_paths(title,category)&limit=1000').catch(() => [])
   ])
 
   const activeLearners = new Set(
