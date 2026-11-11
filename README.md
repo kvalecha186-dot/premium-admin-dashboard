@@ -11,6 +11,10 @@
 
 [Live Preview](https://premium-admin-dashboard.vercel.app) · [Main App: Starfix Website](https://github.com/kvalecha186-dot/Starfix-Website) · [Run locally](#run-locally)
 
+<br/>
+
+<img src="https://raw.githubusercontent.com/kvalecha186-dot/kvalecha186-dot/main/docs/screenshots/admin-login.webp" alt="Starfix Admin sign-in screen" width="900"/>
+
 </div>
 
 
